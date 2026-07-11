@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.eventflow.architecture.DependencyRulesTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-07-11T03:56:57.743Z" hostname="MacBook-Air-de-Andres.local" time="2.944">
+  <properties/>
+  <testcase name="domain_must_not_depend_on_spring_web" classname="com.eventflow.architecture.DependencyRulesTest" time="2.933"/>
+  <testcase name="api_must_not_depend_on_infrastructure" classname="com.eventflow.architecture.DependencyRulesTest" time="0.005"/>
+  <testcase name="infrastructure_must_not_depend_on_api" classname="com.eventflow.architecture.DependencyRulesTest" time="0.002"/>
+  <testcase name="shared_must_not_depend_on_modules" classname="com.eventflow.architecture.DependencyRulesTest" time="0.003"/>
+  <testcase name="domain_must_not_depend_on_dtos" classname="com.eventflow.architecture.DependencyRulesTest" time="0.001"/>
+  <system-out><![CDATA[2026-07-10T22:56:57.766-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] com.tngtech.archunit.core.PluginLoader   : Detected Java version 17.0.19
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

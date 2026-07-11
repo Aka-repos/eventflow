@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>AuthTokenIssuer.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.identity.application</a> &gt; <span class="el_source">AuthTokenIssuer.java</span></div><h1>AuthTokenIssuer.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.identity.application;
+
+import com.eventflow.modules.identity.application.result.AuthResult;
+import com.eventflow.modules.identity.application.support.Sha256;
+import com.eventflow.modules.identity.application.support.TokenGenerator;
+import com.eventflow.modules.identity.domain.RefreshToken;
+import com.eventflow.modules.identity.domain.User;
+import com.eventflow.modules.identity.domain.port.RefreshTokenRepository;
+import com.eventflow.shared.security.JwtProperties;
+import com.eventflow.shared.security.JwtProvider;
+import org.springframework.stereotype.Component;
+
+import java.time.Clock;
+
+/** Emite el par access (JWT) + refresh (opaco, persistido como hash) para un usuario ya validado. */
+@Component
+public class AuthTokenIssuer {
+
+    private final JwtProvider jwtProvider;
+    private final TokenGenerator tokenGenerator;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final JwtProperties jwtProperties;
+    private final Clock clock;
+
+    public AuthTokenIssuer(JwtProvider jwtProvider, TokenGenerator tokenGenerator,
+<span class="fc" id="L26">                           RefreshTokenRepository refreshTokenRepository, JwtProperties jwtProperties, Clock clock) {</span>
+<span class="fc" id="L27">        this.jwtProvider = jwtProvider;</span>
+<span class="fc" id="L28">        this.tokenGenerator = tokenGenerator;</span>
+<span class="fc" id="L29">        this.refreshTokenRepository = refreshTokenRepository;</span>
+<span class="fc" id="L30">        this.jwtProperties = jwtProperties;</span>
+<span class="fc" id="L31">        this.clock = clock;</span>
+<span class="fc" id="L32">    }</span>
+
+    public AuthResult issueFor(User user) {
+<span class="fc" id="L35">        String accessToken = jwtProvider.createAccessToken(user.getId(), user.getEmail(), user.roleCodes());</span>
+<span class="fc" id="L36">        String refreshPlain = tokenGenerator.generate();</span>
+<span class="fc" id="L37">        RefreshToken refreshToken = RefreshToken.issue(</span>
+<span class="fc" id="L38">                user.getId(), Sha256.hex(refreshPlain), clock.instant(), jwtProperties.refreshTtl());</span>
+<span class="fc" id="L39">        refreshTokenRepository.save(refreshToken);</span>
+<span class="fc" id="L40">        return new AuthResult(accessToken, jwtProvider.accessTtlSeconds(), refreshPlain,</span>
+<span class="fc" id="L41">                refreshToken.getId(), user);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

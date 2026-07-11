@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ErrorCode.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.shared.error</a> &gt; <span class="el_source">ErrorCode.java</span></div><h1>ErrorCode.java</h1><pre class="source lang-java linenums">package com.eventflow.shared.error;
+
+import org.springframework.http.HttpStatus;
+
+/**
+ * Catálogo cerrado de códigos de error del contrato (docs/api/02-api-error-model.md).
+ * Ampliarlo es cambio aditivo del contrato: registrar primero en el documento.
+ */
+<span class="fc" id="L9">public enum ErrorCode {</span>
+    // Genéricos
+<span class="fc" id="L11">    MALFORMED_REQUEST(&quot;malformed_request&quot;, HttpStatus.BAD_REQUEST, &quot;Malformed request&quot;),</span>
+<span class="fc" id="L12">    VALIDATION_ERROR(&quot;validation_error&quot;, HttpStatus.UNPROCESSABLE_ENTITY, &quot;Validation failed&quot;),</span>
+<span class="fc" id="L13">    NOT_FOUND(&quot;not_found&quot;, HttpStatus.NOT_FOUND, &quot;Resource not found&quot;),</span>
+<span class="fc" id="L14">    VERSION_CONFLICT(&quot;version_conflict&quot;, HttpStatus.CONFLICT, &quot;Version conflict&quot;),</span>
+<span class="fc" id="L15">    RATE_LIMITED(&quot;rate_limited&quot;, HttpStatus.TOO_MANY_REQUESTS, &quot;Rate limit exceeded&quot;),</span>
+<span class="fc" id="L16">    INTERNAL_ERROR(&quot;internal_error&quot;, HttpStatus.INTERNAL_SERVER_ERROR, &quot;Internal server error&quot;),</span>
+
+    // Seguridad
+<span class="fc" id="L19">    UNAUTHORIZED(&quot;unauthorized&quot;, HttpStatus.UNAUTHORIZED, &quot;Authentication required&quot;),</span>
+<span class="fc" id="L20">    TOKEN_EXPIRED(&quot;token_expired&quot;, HttpStatus.UNAUTHORIZED, &quot;Access token expired&quot;),</span>
+<span class="fc" id="L21">    TOKEN_INVALID(&quot;token_invalid&quot;, HttpStatus.UNAUTHORIZED, &quot;Token invalid&quot;),</span>
+<span class="fc" id="L22">    REFRESH_TOKEN_REUSED(&quot;refresh_token_reused&quot;, HttpStatus.UNAUTHORIZED, &quot;Refresh token reuse detected&quot;),</span>
+<span class="fc" id="L23">    INVALID_CREDENTIALS(&quot;invalid_credentials&quot;, HttpStatus.UNAUTHORIZED, &quot;Invalid credentials&quot;),</span>
+<span class="fc" id="L24">    FORBIDDEN(&quot;forbidden&quot;, HttpStatus.FORBIDDEN, &quot;Forbidden&quot;),</span>
+<span class="fc" id="L25">    ACCOUNT_BLOCKED(&quot;account_blocked&quot;, HttpStatus.FORBIDDEN, &quot;Account blocked&quot;),</span>
+<span class="fc" id="L26">    EMAIL_ALREADY_REGISTERED(&quot;email_already_registered&quot;, HttpStatus.CONFLICT, &quot;Email already registered&quot;);</span>
+
+    private final String code;
+    private final HttpStatus status;
+    private final String title;
+
+<span class="fc" id="L32">    ErrorCode(String code, HttpStatus status, String title) {</span>
+<span class="fc" id="L33">        this.code = code;</span>
+<span class="fc" id="L34">        this.status = status;</span>
+<span class="fc" id="L35">        this.title = title;</span>
+<span class="fc" id="L36">    }</span>
+
+    public String code() {
+<span class="fc" id="L39">        return code;</span>
+    }
+
+    public HttpStatus status() {
+<span class="fc" id="L43">        return status;</span>
+    }
+
+    public String title() {
+<span class="fc" id="L47">        return title;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

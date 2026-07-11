@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GlobalExceptionHandler.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.shared.error</a> &gt; <span class="el_source">GlobalExceptionHandler.java</span></div><h1>GlobalExceptionHandler.java</h1><pre class="source lang-java linenums">package com.eventflow.shared.error;
+
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.ProblemDetail;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.util.List;
+import java.util.Map;
+
+@RestControllerAdvice
+<span class="fc" id="L18">public class GlobalExceptionHandler {</span>
+
+<span class="fc" id="L20">    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);</span>
+
+    @ExceptionHandler(DomainException.class)
+    ProblemDetail handleDomain(DomainException ex, HttpServletRequest request) {
+<span class="fc" id="L24">        log.warn(&quot;domain_error code={} detail={}&quot;, ex.errorCode().code(), ex.getMessage());</span>
+<span class="fc" id="L25">        return ProblemFactory.from(ex.errorCode(), ex.getMessage(), request.getRequestURI());</span>
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ProblemDetail handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
+<span class="fc" id="L30">        List&lt;Map&lt;String, String&gt;&gt; errors = ex.getBindingResult().getFieldErrors().stream()</span>
+<span class="fc" id="L31">                .map(fe -&gt; Map.of(</span>
+<span class="fc" id="L32">                        &quot;field&quot;, fe.getField(),</span>
+<span class="pc bpc" id="L33" title="1 of 2 branches missed.">                        &quot;message&quot;, fe.getDefaultMessage() == null ? &quot;inválido&quot; : fe.getDefaultMessage(),</span>
+<span class="pc bpc" id="L34" title="1 of 2 branches missed.">                        &quot;code&quot;, fe.getCode() == null ? &quot;invalid&quot; : fe.getCode()))</span>
+<span class="fc" id="L35">                .toList();</span>
+<span class="fc" id="L36">        return ProblemFactory.validation(request.getRequestURI(), errors);</span>
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ProblemDetail handleUnreadable(HttpServletRequest request) {
+<span class="fc" id="L41">        return ProblemFactory.from(ErrorCode.MALFORMED_REQUEST, &quot;El cuerpo del request no es JSON válido&quot;,</span>
+<span class="fc" id="L42">                request.getRequestURI());</span>
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    ProblemDetail handleNoResource(HttpServletRequest request) {
+<span class="fc" id="L47">        return ProblemFactory.from(ErrorCode.NOT_FOUND, &quot;El recurso no existe&quot;, request.getRequestURI());</span>
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    ProblemDetail handleAccessDenied(HttpServletRequest request) {
+<span class="nc" id="L52">        return ProblemFactory.from(ErrorCode.FORBIDDEN, &quot;No tienes permiso para esta operación&quot;,</span>
+<span class="nc" id="L53">                request.getRequestURI());</span>
+    }
+
+    @ExceptionHandler(Exception.class)
+    ProblemDetail handleGeneric(Exception ex, HttpServletRequest request) {
+<span class="nc" id="L58">        log.error(&quot;unexpected_error uri={}&quot;, request.getRequestURI(), ex);</span>
+<span class="nc" id="L59">        return ProblemFactory.from(ErrorCode.INTERNAL_ERROR, &quot;Error interno; reporta el traceId&quot;,</span>
+<span class="nc" id="L60">                request.getRequestURI());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

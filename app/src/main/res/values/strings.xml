@@ -1,0 +1,29 @@
+<resources>
+    <string name="app_name">EventFlow</string>
+
+    <string name="login_title">Inicia sesión</string>
+    <string name="login_submit">Entrar</string>
+    <string name="login_go_register">¿No tienes cuenta? Regístrate</string>
+
+    <string name="register_title">Crea tu cuenta</string>
+    <string name="register_submit">Registrarme</string>
+    <string name="register_go_login">¿Ya tienes cuenta? Inicia sesión</string>
+
+    <string name="home_title">EventFlow</string>
+    <string name="home_greeting">Hola, %1$s</string>
+    <string name="home_logout">Cerrar sesión</string>
+
+    <string name="field_email">Email</string>
+    <string name="field_password">Contraseña</string>
+    <string name="field_full_name">Nombre completo</string>
+    <string name="field_phone">Teléfono (opcional)</string>
+
+    <string name="ef_show">Ver</string>
+    <string name="ef_hide">Ocultar</string>
+
+    <string name="error_invalid_credentials">Email o contraseña incorrectos</string>
+    <string name="error_account_blocked">Tu cuenta está bloqueada</string>
+    <string name="error_email_taken">Ese email ya está registrado</string>
+    <string name="error_network">Sin conexión. Intenta de nuevo</string>
+    <string name="error_unknown">Algo salió mal. Intenta de nuevo</string>
+</resources>

@@ -1,0 +1,48 @@
+spring:
+  application:
+    name: eventflow-backend
+  datasource:
+    # Supabase: SIEMPRE conexión directa (5432) o pooler en modo sesión — nunca el pooler transaccional (auditoría A8)
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/eventflow}
+    username: ${DB_USER:postgres}
+    password: ${DB_PASSWORD:postgres}
+    hikari:
+      maximum-pool-size: 10
+  flyway:
+    enabled: true
+    # V1 crea los schemas; la auto-creación de Flyway abre una conexión de gestión
+    # que queda idle-in-transaction y bloquea los ALTER TABLE de V8 (RLS).
+    create-schemas: false
+    default-schema: public
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none   # Flyway es el único dueño del esquema; validate falla con CITEXT
+    properties:
+      hibernate.jdbc.time_zone: UTC
+  mvc:
+    problemdetails:
+      enabled: false   # GlobalExceptionHandler es la única autoridad RFC 9457 (el handler nativo devolvería 400 sin `code`)
+
+eventflow:
+  security:
+    jwt:
+      # HS256 para el MVP; rotación a llaves asimétricas prevista sin cambio de contrato
+      secret: ${JWT_SECRET:change-me-in-prod-this-is-a-dev-only-secret-key-256bits!!}
+      access-ttl: 15m
+      refresh-ttl: 14d
+      issuer: eventflow
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui
+
+server:
+  servlet:
+    context-path: /api/v1
+
+logging:
+  pattern:
+    level: '%5p [cid=%X{correlationId:-}]'

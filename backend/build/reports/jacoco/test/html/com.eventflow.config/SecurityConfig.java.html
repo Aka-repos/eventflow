@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package com.eventflow.config;
+
+import com.eventflow.shared.error.ErrorCode;
+import com.eventflow.shared.error.ProblemFactory;
+import com.eventflow.shared.security.JwtAuthenticationFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import java.io.IOException;
+
+@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+<span class="fc" id="L27">public class SecurityConfig {</span>
+
+    @Bean
+    PasswordEncoder passwordEncoder() {
+<span class="fc" id="L31">        return new BCryptPasswordEncoder();</span>
+    }
+
+    @Bean
+    SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthenticationFilter jwtFilter,
+                                            ObjectMapper objectMapper) throws Exception {
+<span class="fc" id="L37">        return http</span>
+<span class="fc" id="L38">                .csrf(csrf -&gt; csrf.disable())</span>
+<span class="fc" id="L39">                .sessionManagement(sm -&gt; sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))</span>
+<span class="fc" id="L40">                .authorizeHttpRequests(auth -&gt; auth</span>
+<span class="fc" id="L41">                        .requestMatchers(&quot;/auth/register&quot;, &quot;/auth/login&quot;, &quot;/auth/refresh&quot;).permitAll()</span>
+<span class="fc" id="L42">                        .requestMatchers(HttpMethod.GET, &quot;/events/**&quot;, &quot;/categories&quot;).permitAll()</span>
+<span class="fc" id="L43">                        .requestMatchers(&quot;/v3/api-docs/**&quot;, &quot;/swagger-ui/**&quot;, &quot;/swagger-ui.html&quot;).permitAll()</span>
+<span class="fc" id="L44">                        .requestMatchers(&quot;/actuator/health&quot;).permitAll()</span>
+<span class="fc" id="L45">                        .anyRequest().authenticated())</span>
+<span class="fc" id="L46">                .exceptionHandling(ex -&gt; ex</span>
+<span class="fc" id="L47">                        .authenticationEntryPoint((request, response, e) -&gt;</span>
+<span class="fc" id="L48">                                writeProblem(objectMapper, request, response, ErrorCode.UNAUTHORIZED,</span>
+                                        &quot;Autenticación requerida&quot;))
+<span class="fc" id="L50">                        .accessDeniedHandler((request, response, e) -&gt;</span>
+<span class="nc" id="L51">                                writeProblem(objectMapper, request, response, ErrorCode.FORBIDDEN,</span>
+                                        &quot;No tienes permiso para esta operación&quot;)))
+<span class="fc" id="L53">                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)</span>
+<span class="fc" id="L54">                .build();</span>
+    }
+
+    private static void writeProblem(ObjectMapper objectMapper, HttpServletRequest request,
+                                     HttpServletResponse response, ErrorCode code, String detail) throws IOException {
+<span class="fc" id="L59">        var problem = ProblemFactory.from(code, detail, request.getRequestURI());</span>
+<span class="fc" id="L60">        response.setStatus(code.status().value());</span>
+<span class="fc" id="L61">        response.setContentType(MediaType.APPLICATION_PROBLEM_JSON_VALUE);</span>
+<span class="fc" id="L62">        response.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+<span class="fc" id="L63">        objectMapper.writeValue(response.getWriter(), problem);</span>
+<span class="fc" id="L64">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,2468 @@
+openapi: 3.1.0
+info:
+  title: EventFlow API
+  version: 1.0.0
+  description: |
+    Contrato oficial Backend ↔ Android de EventFlow (API First, fuente única de verdad).
+    Convenciones: docs/api/01-api-guidelines.md · Errores RFC 9457: docs/api/02-api-error-model.md ·
+    Paginación keyset: docs/api/07-pagination-filtering.md. Dinero como string decimal, fechas ISO-8601 UTC,
+    enums UPPER_SNAKE (los clientes DEBEN tolerar valores desconocidos).
+  contact:
+    name: EventFlow Architecture
+  license:
+    name: Proprietary
+    identifier: LicenseRef-EventFlow-Proprietary
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Desarrollo
+  - url: https://api.eventflow.app/api/v1
+    description: Producción (placeholder)
+security:
+  - bearerAuth: []
+tags:
+  - name: auth
+    description: Registro, login, rotación de refresh tokens y logout
+  - name: catalog
+    description: Catálogo público de eventos, categorías y parkings
+  - name: orders
+    description: Órdenes de compra y pagos (pipeline único para boletos, parking y exchange)
+  - name: tickets
+    description: Mis boletos, QR dinámico y cancelación inteligente
+  - name: exchange
+    description: Official Ticket Exchange — publicación, reserva temporal y compra
+  - name: waitlist
+    description: Lista de espera FIFO y ofertas con ventana
+  - name: me
+    description: Perfil, favoritos, notificaciones, dispositivos y reservas propias
+  - name: checkin
+    description: Validación de QR en puerta y parking (organizador/staff)
+  - name: organizer
+    description: Gestión de eventos, políticas, tarifas, reembolsos y estadísticas
+  - name: admin
+    description: Administración de plataforma, catálogos y configuración global
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      description: UUID por intento de operación; repetición devuelve la respuesta original.
+      schema: { type: string, format: uuid }
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: false
+      schema: { type: string, format: uuid }
+    IfMatchVersion:
+      name: If-Match
+      in: header
+      required: true
+      description: Versión vigente del recurso (optimistic lock); mismatch ⇒ 409 version_conflict.
+      schema: { type: integer, minimum: 0 }
+    Cursor:
+      name: cursor
+      in: query
+      required: false
+      description: Cursor opaco de la página anterior (meta.nextCursor).
+      schema: { type: string }
+    Limit:
+      name: limit
+      in: query
+      required: false
+      schema: { type: integer, minimum: 1, maximum: 100, default: 20 }
+    EventId:
+      name: eventId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    TicketId:
+      name: ticketId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    OrderId:
+      name: orderId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ListingId:
+      name: listingId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    OfferId:
+      name: offerId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    RefundId:
+      name: refundId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ParkingId:
+      name: parkingId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    GenericId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+
+  responses:
+    BadRequest:
+      description: Request malformado
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthorized:
+      description: Token ausente, inválido o expirado
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    PaymentRequired:
+      description: Pago rechazado
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: Autenticado sin permiso (incluye qr_not_yet_visible)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: Recurso inexistente o ajeno (anti-enumeración)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: Conflicto de estado o concurrencia
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    UnprocessableEntity:
+      description: Validación o regla de negocio
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    TooManyRequests:
+      description: Rate limit excedido (ver Retry-After)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    # ===== Compartidos =====
+    Money:
+      type: object
+      description: Monto como string decimal (nunca número JSON) + ISO-4217. v1 opera USD.
+      required: [amount, currency]
+      properties:
+        amount: { type: string, pattern: '^\d+\.\d{2}$', examples: ['72.00'] }
+        currency: { type: string, pattern: '^[A-Z]{3}$', examples: [USD] }
+    CursorMeta:
+      type: object
+      required: [hasNext]
+      properties:
+        hasNext: { type: boolean }
+        nextCursor: { type: [string, 'null'] }
+    FieldError:
+      type: object
+      required: [field, message, code]
+      properties:
+        field: { type: string }
+        message: { type: string }
+        code: { type: string }
+    Problem:
+      type: object
+      description: RFC 9457 + extensiones EventFlow (docs/api/02-api-error-model.md)
+      required: [type, title, status, detail, instance, code, timestamp, traceId]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        code: { type: string, description: ErrorCode máquina — clave de enrutamiento del cliente }
+        timestamp: { type: string, format: date-time }
+        traceId: { type: string }
+        errors:
+          type: array
+          items: { $ref: '#/components/schemas/FieldError' }
+        retryAfterSeconds: { type: integer }
+        conflictVersion: { type: integer }
+
+    # ===== Enums (los clientes toleran valores desconocidos) =====
+    RoleCode: { type: string, enum: [ADMIN, ORGANIZER, STAFF, ATTENDEE] }
+    UserStatus: { type: string, enum: [ACTIVE, BLOCKED, PENDING_VERIFICATION] }
+    EventStatus: { type: string, enum: [DRAFT, PUBLISHED, SOLD_OUT, IN_PROGRESS, FINISHED, CANCELLED, SUSPENDED] }
+    TicketStatus: { type: string, enum: [ACTIVE, PUBLISHED_IN_EXCHANGE, REFUND_PENDING, REFUNDED, USED, EXPIRED, CANCELLED, INVALIDATED] }
+    AcquiredVia: { type: string, enum: [PRIMARY, EXCHANGE] }
+    HistoryCause: { type: string, enum: [ISSUED, PUBLISH, UNPUBLISH, TRANSFER, REFUND_REQUEST, REFUND_APPROVED, REFUND_REJECTED, CHECKIN, EXPIRE, INVALIDATE, REISSUE, EVENT_CANCELLED] }
+    RecoveryOption: { type: string, enum: [REFUND, EXCHANGE, NONE] }
+    RecoveryReason: { type: string, enum: [REFUND_WINDOW_ACTIVE, REFUND_WINDOW_EXPIRED, ACQUIRED_VIA_EXCHANGE, EXCHANGE_DISABLED, TICKET_NOT_RECOVERABLE] }
+    OrderStatus: { type: string, enum: [PENDING, PAID, FAILED, CANCELLED, REFUNDED] }
+    OrderItemType: { type: string, enum: [TICKET, PARKING, EXCHANGE_TICKET] }
+    PaymentStatus: { type: string, enum: [PENDING, APPROVED, DECLINED, REFUNDED] }
+    PaymentProvider: { type: string, enum: [FAKE, STRIPE, PAYPAL, YAPPY, CARD, TRANSFER] }
+    PaymentMethod: { type: string, enum: [FAKE, CARD] }
+    ListingStatus: { type: string, enum: [WAITLIST_HOLD, PUBLISHED, RESERVED, SOLD, CANCELLED, EXPIRED] }
+    RefundStatus: { type: string, enum: [REQUESTED, APPROVED, REJECTED, CANCELLED] }
+    WaitlistEntryStatus: { type: string, enum: [WAITING, OFFERED, FULFILLED, SKIPPED, CANCELLED] }
+    OfferSource: { type: string, enum: [INVENTORY, EXCHANGE] }
+    ParkingType: { type: string, enum: [VIP, GENERAL, STAFF, MOTO, ACCESSIBLE] }
+    ParkingReservationStatus: { type: string, enum: [PENDING, CONFIRMED, IN_USE, COMPLETED, CANCELLED, EXPIRED] }
+    NotificationType: { type: string, enum: [PURCHASE_SUCCESS, EVENT_REMINDER, PARKING_RESERVED, SCHEDULE_CHANGE, CANCELLATION, WAITLIST_OFFER, EXCHANGE_SOLD, REFUND_RESOLVED, GENERIC] }
+    CheckInResult: { type: string, enum: [GRANTED, DENIED] }
+    DevicePlatform: { type: string, enum: [ANDROID, IOS, WEB] }
+
+    # ===== Auth y perfil =====
+    RegisterRequest:
+      type: object
+      required: [email, password, fullName]
+      properties:
+        email: { type: string, format: email, maxLength: 255 }
+        password: { type: string, minLength: 8, maxLength: 72 }
+        fullName: { type: string, minLength: 1, maxLength: 200 }
+        phone: { type: string, pattern: '^\+[1-9]\d{6,14}$' }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string }
+    RefreshRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string }
+    LogoutRequest:
+      type: object
+      required: [refreshToken]
+      properties:
+        refreshToken: { type: string }
+    UserProfile:
+      type: object
+      required: [id, email, fullName, roles, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        fullName: { type: string }
+        phone: { type: [string, 'null'] }
+        roles:
+          type: array
+          items: { $ref: '#/components/schemas/RoleCode' }
+        createdAt: { type: string, format: date-time }
+    AuthTokensResponse:
+      type: object
+      required: [accessToken, accessTokenExpiresIn, refreshToken, user]
+      properties:
+        accessToken: { type: string }
+        accessTokenExpiresIn: { type: integer, description: Segundos de vida del access token }
+        refreshToken: { type: string }
+        user: { $ref: '#/components/schemas/UserProfile' }
+    UpdateProfileRequest:
+      type: object
+      required: [fullName]
+      properties:
+        fullName: { type: string, minLength: 1, maxLength: 200 }
+        phone: { type: [string, 'null'], pattern: '^\+[1-9]\d{6,14}$' }
+    RegisterDeviceRequest:
+      type: object
+      required: [fcmToken, platform]
+      properties:
+        fcmToken: { type: string }
+        platform: { $ref: '#/components/schemas/DevicePlatform' }
+
+    # ===== Catálogo =====
+    CategoryDto:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        icon: { type: [string, 'null'] }
+    SponsorDto:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        logoUrl: { type: [string, 'null'] }
+        website: { type: [string, 'null'] }
+    ZoneDto:
+      type: object
+      required: [id, name, capacity]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        capacity: { type: integer }
+    TicketTypeDto:
+      type: object
+      required: [id, name, price, available]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: [string, 'null'] }
+        price: { $ref: '#/components/schemas/Money' }
+        zoneName: { type: [string, 'null'] }
+        available: { type: boolean, description: Cupo exacto no se expone al público (O10) }
+        salesEndsAt: { type: [string, 'null'], format: date-time }
+    EventPolicyPublic:
+      type: object
+      required: [exchangeEnabled, exchangeDepreciationPct, waitlistEnabled, qrVisibilityHoursBefore]
+      properties:
+        refundWindowEndsAt: { type: [string, 'null'], format: date-time }
+        exchangeEnabled: { type: boolean }
+        exchangeDepreciationPct: { type: integer, minimum: 0, maximum: 100 }
+        waitlistEnabled: { type: boolean }
+        qrVisibilityHoursBefore: { type: integer }
+    EventSummary:
+      type: object
+      required: [id, title, venueName, startsAt, endsAt, timezone, status, category]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        venueName: { type: string }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        timezone: { type: string, description: IANA del venue (formateo en cliente) }
+        status: { $ref: '#/components/schemas/EventStatus' }
+        coverUrl: { type: [string, 'null'] }
+        category: { $ref: '#/components/schemas/CategoryDto' }
+        priceFrom:
+          oneOf: [{ $ref: '#/components/schemas/Money' }, { type: 'null' }]
+        isFavorite: { type: [boolean, 'null'], description: Solo presente autenticado }
+    EventDetail:
+      allOf:
+        - $ref: '#/components/schemas/EventSummary'
+        - type: object
+          required: [description, organizer, ticketTypes, zones, parkings, sponsors, policies, waitlistOpen]
+          properties:
+            description: { type: string }
+            address: { type: [string, 'null'] }
+            latitude: { type: [number, 'null'] }
+            longitude: { type: [number, 'null'] }
+            organizer:
+              type: object
+              required: [id, name]
+              properties:
+                id: { type: string, format: uuid }
+                name: { type: string }
+            ticketTypes:
+              type: array
+              items: { $ref: '#/components/schemas/TicketTypeDto' }
+            zones:
+              type: array
+              items: { $ref: '#/components/schemas/ZoneDto' }
+            parkings:
+              type: array
+              items: { $ref: '#/components/schemas/ParkingSummary' }
+            sponsors:
+              type: array
+              items: { $ref: '#/components/schemas/SponsorDto' }
+            policies: { $ref: '#/components/schemas/EventPolicyPublic' }
+            waitlistOpen: { type: boolean }
+    ParkingSummary:
+      type: object
+      required: [id, name, type, price, opensAt, closesAt, availableSlots]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        type: { $ref: '#/components/schemas/ParkingType' }
+        price: { $ref: '#/components/schemas/Money' }
+        opensAt: { type: string, format: date-time }
+        closesAt: { type: string, format: date-time }
+        availableSlots: { type: integer }
+
+    # ===== Órdenes y pagos =====
+    OrderItemRequest:
+      type: object
+      description: Sin montos — todos los precios los calcula el servidor.
+      required: [type, referenceId, quantity]
+      properties:
+        type: { $ref: '#/components/schemas/OrderItemType' }
+        referenceId:
+          type: string
+          format: uuid
+          description: 'TICKET: ticketTypeId · PARKING: parkingId · EXCHANGE_TICKET: temporalReservationId'
+        quantity: { type: integer, minimum: 1, maximum: 10 }
+    CreateOrderRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          maxItems: 10
+          items: { $ref: '#/components/schemas/OrderItemRequest' }
+    PayOrderRequest:
+      type: object
+      required: [method]
+      properties:
+        method: { $ref: '#/components/schemas/PaymentMethod' }
+    PaymentSummary:
+      type: object
+      required: [id, provider, status, amount]
+      properties:
+        id: { type: string, format: uuid }
+        provider: { $ref: '#/components/schemas/PaymentProvider' }
+        status: { $ref: '#/components/schemas/PaymentStatus' }
+        amount: { $ref: '#/components/schemas/Money' }
+    OrderItemResponse:
+      type: object
+      required: [id, type, description, quantity, unitPrice]
+      properties:
+        id: { type: string, format: uuid }
+        type: { $ref: '#/components/schemas/OrderItemType' }
+        description: { type: string }
+        quantity: { type: integer }
+        unitPrice: { $ref: '#/components/schemas/Money' }
+        ticketIds:
+          type: array
+          items: { type: string, format: uuid }
+          description: Presente tras el pago para ítems TICKET/EXCHANGE_TICKET
+    OrderResponse:
+      type: object
+      required: [id, status, total, expiresAt, createdAt, items]
+      properties:
+        id: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/OrderStatus' }
+        total: { $ref: '#/components/schemas/Money' }
+        expiresAt: { type: string, format: date-time }
+        createdAt: { type: string, format: date-time }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OrderItemResponse' }
+        payment:
+          oneOf: [{ $ref: '#/components/schemas/PaymentSummary' }, { type: 'null' }]
+
+    # ===== Boletos, QR, recovery =====
+    TicketResponse:
+      type: object
+      required: [id, event, ticketTypeName, status, acquiredVia, purchasedAt, canRecover]
+      properties:
+        id: { type: string, format: uuid }
+        event: { $ref: '#/components/schemas/EventSummary' }
+        ticketTypeName: { type: string }
+        zoneName: { type: [string, 'null'] }
+        status: { $ref: '#/components/schemas/TicketStatus' }
+        acquiredVia: { $ref: '#/components/schemas/AcquiredVia' }
+        purchasedAt: { type: string, format: date-time }
+        qrAvailableAt: { type: [string, 'null'], format: date-time }
+        canRecover: { type: boolean }
+    TicketHistoryEntry:
+      type: object
+      required: [fromStatus, toStatus, cause, occurredAt]
+      properties:
+        fromStatus: { type: string }
+        toStatus: { type: string }
+        cause: { $ref: '#/components/schemas/HistoryCause' }
+        occurredAt: { type: string, format: date-time }
+    TicketDetail:
+      allOf:
+        - $ref: '#/components/schemas/TicketResponse'
+        - type: object
+          required: [originalPrice, acquisitionPrice, history]
+          properties:
+            originalPrice: { $ref: '#/components/schemas/Money' }
+            acquisitionPrice: { $ref: '#/components/schemas/Money' }
+            history:
+              type: array
+              items: { $ref: '#/components/schemas/TicketHistoryEntry' }
+    QrResponse:
+      type: object
+      required: [qrToken, expiresAt, refreshAfter]
+      properties:
+        qrToken: { type: string, description: JWS opaco; el cliente no interpreta su contenido }
+        expiresAt: { type: string, format: date-time }
+        refreshAfter: { type: string, format: date-time }
+    RefundQuote:
+      type: object
+      required: [amount, deadline]
+      properties:
+        amount: { $ref: '#/components/schemas/Money', description: = acquisitionPrice (C2) }
+        deadline: { type: string, format: date-time }
+    ExchangeQuote:
+      type: object
+      required: [originalPrice, depreciationPct, listPrice]
+      properties:
+        originalPrice: { $ref: '#/components/schemas/Money' }
+        depreciationPct: { type: integer }
+        listPrice: { $ref: '#/components/schemas/Money' }
+        listingDeadline: { type: [string, 'null'], format: date-time }
+    RecoveryOptionsResponse:
+      type: object
+      description: Cancelación inteligente — la UI solo muestra la opción devuelta. ADR-19 acquiredVia=EXCHANGE jamás devuelve REFUND.
+      required: [ticketId, option, reason, links]
+      properties:
+        ticketId: { type: string, format: uuid }
+        option: { $ref: '#/components/schemas/RecoveryOption' }
+        reason: { $ref: '#/components/schemas/RecoveryReason' }
+        refund:
+          oneOf: [{ $ref: '#/components/schemas/RefundQuote' }, { type: 'null' }]
+        exchange:
+          oneOf: [{ $ref: '#/components/schemas/ExchangeQuote' }, { type: 'null' }]
+        links:
+          type: object
+          properties:
+            action: { type: [string, 'null'], description: Path de la acción válida siguiente }
+
+    # ===== Reembolsos =====
+    CreateRefundRequest:
+      type: object
+      properties:
+        reason: { type: [string, 'null'], maxLength: 500 }
+    RejectRefundRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason: { type: string, minLength: 1, maxLength: 500 }
+    RefundResponse:
+      type: object
+      required: [id, ticketId, amount, status, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        ticketId: { type: string, format: uuid }
+        amount: { $ref: '#/components/schemas/Money' }
+        status: { $ref: '#/components/schemas/RefundStatus' }
+        reason: { type: [string, 'null'] }
+        createdAt: { type: string, format: date-time }
+        resolvedAt: { type: [string, 'null'], format: date-time }
+
+    # ===== Exchange =====
+    ListingResponse:
+      type: object
+      description: Sin datos del vendedor (privacidad).
+      required: [id, event, ticketTypeName, listPrice, originalPrice, depreciationPct, status, expiresAt]
+      properties:
+        id: { type: string, format: uuid }
+        event: { $ref: '#/components/schemas/EventSummary' }
+        ticketTypeName: { type: string }
+        zoneName: { type: [string, 'null'] }
+        listPrice: { $ref: '#/components/schemas/Money' }
+        originalPrice: { $ref: '#/components/schemas/Money' }
+        depreciationPct: { type: integer }
+        status: { $ref: '#/components/schemas/ListingStatus' }
+        expiresAt: { type: string, format: date-time }
+    MyListingResponse:
+      allOf:
+        - $ref: '#/components/schemas/ListingResponse'
+        - type: object
+          required: [ticketId, estimatedSellerAmount]
+          properties:
+            ticketId: { type: string, format: uuid }
+            estimatedSellerAmount: { $ref: '#/components/schemas/Money' }
+    CreateReservationResponse:
+      type: object
+      required: [id, listingId, price, expiresAt]
+      properties:
+        id: { type: string, format: uuid }
+        listingId: { type: string, format: uuid }
+        price: { $ref: '#/components/schemas/Money' }
+        expiresAt: { type: string, format: date-time }
+
+    # ===== Waitlist =====
+    WaitlistStatusResponse:
+      type: object
+      required: [eventId, status, peopleAhead, joinedAt]
+      properties:
+        eventId: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/WaitlistEntryStatus' }
+        peopleAhead: { type: integer }
+        joinedAt: { type: string, format: date-time }
+    WaitlistOfferResponse:
+      type: object
+      required: [id, event, source, price, expiresAt]
+      properties:
+        id: { type: string, format: uuid }
+        event: { $ref: '#/components/schemas/EventSummary' }
+        source: { $ref: '#/components/schemas/OfferSource' }
+        price: { $ref: '#/components/schemas/Money' }
+        expiresAt: { type: string, format: date-time }
+    AcceptOfferResponse:
+      type: object
+      required: [order]
+      properties:
+        order: { $ref: '#/components/schemas/OrderResponse' }
+
+    # ===== Parking / Check-in =====
+    ParkingReservationResponse:
+      type: object
+      required: [id, parkingName, event, status]
+      properties:
+        id: { type: string, format: uuid }
+        parkingName: { type: string }
+        slotCode: { type: [string, 'null'], description: Asignada al check-in }
+        event: { $ref: '#/components/schemas/EventSummary' }
+        status: { $ref: '#/components/schemas/ParkingReservationStatus' }
+        qrAvailableAt: { type: [string, 'null'], format: date-time }
+    CheckInRequest:
+      type: object
+      required: [qrToken]
+      properties:
+        qrToken: { type: string }
+    CheckInResponse:
+      type: object
+      required: [result, occurredAt]
+      properties:
+        result: { $ref: '#/components/schemas/CheckInResult' }
+        attendeeName: { type: [string, 'null'] }
+        ticketTypeName: { type: [string, 'null'] }
+        zoneName: { type: [string, 'null'] }
+        denialCode: { type: [string, 'null'] }
+        occurredAt: { type: string, format: date-time }
+
+    # ===== Organizador =====
+    CreateEventRequest:
+      type: object
+      required: [title, description, categoryId, venueName, timezone, startsAt, endsAt]
+      properties:
+        title: { type: string, minLength: 3, maxLength: 200 }
+        description: { type: string }
+        categoryId: { type: integer }
+        venueName: { type: string }
+        address: { type: [string, 'null'] }
+        latitude: { type: [number, 'null'], minimum: -90, maximum: 90 }
+        longitude: { type: [number, 'null'], minimum: -180, maximum: 180 }
+        timezone: { type: string, description: Identificador IANA }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+    UpdateEventRequest:
+      type: object
+      description: PATCH parcial; publicado solo admite campos seguros.
+      properties:
+        title: { type: string, minLength: 3, maxLength: 200 }
+        description: { type: string }
+        categoryId: { type: integer }
+        venueName: { type: string }
+        address: { type: [string, 'null'] }
+        latitude: { type: [number, 'null'] }
+        longitude: { type: [number, 'null'] }
+        timezone: { type: string }
+        startsAt: { type: string, format: date-time }
+        endsAt: { type: string, format: date-time }
+        coverUrl: { type: [string, 'null'] }
+    EventPolicyRequest:
+      type: object
+      required: [exchangeEnabled, exchangeDepreciationPct, waitlistEnabled, waitlistOfferMinutes, tempReservationMinutes, qrVisibilityHoursBefore, qrExpirationMinutes]
+      properties:
+        refundWindowEndsAt: { type: [string, 'null'], format: date-time }
+        exchangeEnabled: { type: boolean }
+        exchangeDepreciationPct: { type: integer, minimum: 0, maximum: 100 }
+        exchangeListingDeadline: { type: [string, 'null'], format: date-time }
+        waitlistEnabled: { type: boolean }
+        waitlistOfferMinutes: { type: integer, minimum: 1 }
+        tempReservationMinutes: { type: integer, minimum: 1 }
+        qrVisibilityHoursBefore: { type: integer, minimum: 0 }
+        qrExpirationMinutes: { type: integer, minimum: 1 }
+        cancellationPolicy: { type: [string, 'null'] }
+        extraPolicies: { type: object, additionalProperties: true }
+    EventPolicyResponse:
+      allOf:
+        - $ref: '#/components/schemas/EventPolicyRequest'
+        - type: object
+          required: [eventId, version]
+          properties:
+            eventId: { type: string, format: uuid }
+            version: { type: integer }
+    CreateTicketTypeRequest:
+      type: object
+      description: Excepción documentada — el organizador SÍ define precios de su catálogo.
+      required: [name, price, totalQuantity]
+      properties:
+        name: { type: string, maxLength: 120 }
+        description: { type: [string, 'null'] }
+        price: { $ref: '#/components/schemas/Money' }
+        zoneId: { type: [string, 'null'], format: uuid }
+        totalQuantity: { type: integer, minimum: 1 }
+        salesStartsAt: { type: [string, 'null'], format: date-time }
+        salesEndsAt: { type: [string, 'null'], format: date-time }
+    CreateZoneRequest:
+      type: object
+      required: [name, capacity]
+      properties:
+        name: { type: string, maxLength: 80 }
+        capacity: { type: integer, minimum: 1 }
+    CreateParkingRequest:
+      type: object
+      required: [name, type, totalSlots, price, opensAt, closesAt]
+      properties:
+        name: { type: string, maxLength: 120 }
+        type: { $ref: '#/components/schemas/ParkingType' }
+        totalSlots: { type: integer, minimum: 1 }
+        price: { $ref: '#/components/schemas/Money' }
+        opensAt: { type: string, format: date-time }
+        closesAt: { type: string, format: date-time }
+    AssignStaffRequest:
+      type: object
+      required: [userEmail]
+      properties:
+        userEmail: { type: string, format: email }
+        permissions:
+          type: array
+          items: { type: string }
+          default: [CHECKIN_EVENT]
+    SeriesPoint:
+      type: object
+      required: [period, value]
+      properties:
+        period: { type: string, description: 'ISO fecha o YYYY-MM' }
+        value: { type: number }
+    EventStatsResponse:
+      type: object
+      required: [eventId, ticketsSold, revenue, parkingRevenue, attendance, refundsCount, refundsAmount, exchangeListed, exchangeSold, exchangeFeesGenerated, waitlistSize, occupancyPct]
+      properties:
+        eventId: { type: string, format: uuid }
+        ticketsSold: { type: integer }
+        revenue: { $ref: '#/components/schemas/Money' }
+        parkingRevenue: { $ref: '#/components/schemas/Money' }
+        attendance: { type: integer }
+        refundsCount: { type: integer }
+        refundsAmount: { $ref: '#/components/schemas/Money' }
+        exchangeListed: { type: integer }
+        exchangeSold: { type: integer }
+        exchangeFeesGenerated: { $ref: '#/components/schemas/Money' }
+        waitlistSize: { type: integer }
+        occupancyPct: { type: number }
+    OrganizerDashboardResponse:
+      type: object
+      required: [eventsCount, ticketsSoldSeries, revenueSeries, refundsSeries, exchangeSeries]
+      properties:
+        eventsCount: { type: integer }
+        ticketsSoldSeries: { type: array, items: { $ref: '#/components/schemas/SeriesPoint' } }
+        revenueSeries: { type: array, items: { $ref: '#/components/schemas/SeriesPoint' } }
+        refundsSeries: { type: array, items: { $ref: '#/components/schemas/SeriesPoint' } }
+        exchangeSeries: { type: array, items: { $ref: '#/components/schemas/SeriesPoint' } }
+
+    # ===== Admin / Notificaciones =====
+    AdminUserResponse:
+      allOf:
+        - $ref: '#/components/schemas/UserProfile'
+        - type: object
+          required: [status]
+          properties:
+            status: { $ref: '#/components/schemas/UserStatus' }
+            deletedAt: { type: [string, 'null'], format: date-time }
+    AdminUpdateUserRequest:
+      type: object
+      properties:
+        status: { $ref: '#/components/schemas/UserStatus' }
+        roles:
+          type: array
+          items: { $ref: '#/components/schemas/RoleCode' }
+    CategoryRequest:
+      type: object
+      required: [name, active]
+      properties:
+        name: { type: string, maxLength: 80 }
+        icon: { type: [string, 'null'] }
+        active: { type: boolean }
+    SponsorRequest:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, maxLength: 120 }
+        logoUrl: { type: [string, 'null'] }
+        website: { type: [string, 'null'] }
+    GlobalConfigEntry:
+      type: object
+      required: [key, value, version]
+      properties:
+        key: { type: string }
+        value: { type: object, additionalProperties: true }
+        description: { type: [string, 'null'] }
+        version: { type: integer }
+    AdminDashboardResponse:
+      type: object
+      required: [usersCount, eventsSeries, gmvSeries, feesSeries, refundsSeries, waitlistSeries]
+      properties:
+        usersCount: { type: integer }
+        eventsSeries: { type: array, items: { $ref: '#/components/schemas/SeriesPoint' } }
+        gmvSeries: { type: array, items: { $ref: '#/components/schemas/SeriesPoint' } }
+        feesSeries: { type: array, items: { $ref: '#/components/schemas/SeriesPoint' } }
+        refundsSeries: { type: array, items: { $ref: '#/components/schemas/SeriesPoint' } }
+        waitlistSeries: { type: array, items: { $ref: '#/components/schemas/SeriesPoint' } }
+    NotificationResponse:
+      type: object
+      required: [id, type, title, body, createdAt]
+      properties:
+        id: { type: string, format: uuid }
+        type: { $ref: '#/components/schemas/NotificationType' }
+        title: { type: string }
+        body: { type: string }
+        payload: { type: [object, 'null'], additionalProperties: true }
+        readAt: { type: [string, 'null'], format: date-time }
+        createdAt: { type: string, format: date-time }
+
+paths:
+  # ======================= AUTH =======================
+  /auth/register:
+    post:
+      tags: [auth]
+      operationId: register
+      summary: Registro de asistente
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterRequest' }
+      responses:
+        '201':
+          description: Cuenta creada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/AuthTokensResponse' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      summary: Inicio de sesión
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+            example: { email: ana@mail.com, password: 'S3gura!pass' }
+      responses:
+        '200':
+          description: Sesión iniciada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/AuthTokensResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /auth/refresh:
+    post:
+      tags: [auth]
+      operationId: refreshToken
+      summary: Rotación de refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RefreshRequest' }
+      responses:
+        '200':
+          description: Tokens rotados (el refresh anterior queda inválido)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/AuthTokensResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      summary: Revoca el refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LogoutRequest' }
+      responses:
+        '204': { description: Sesión cerrada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ======================= CATALOG =======================
+  /events:
+    get:
+      tags: [catalog]
+      operationId: listEvents
+      summary: Búsqueda y filtrado de eventos publicados
+      security: []
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: categoryId, in: query, schema: { type: integer } }
+        - { name: dateFrom, in: query, schema: { type: string, format: date-time } }
+        - { name: dateTo, in: query, schema: { type: string, format: date-time } }
+        - { name: nearLat, in: query, schema: { type: number } }
+        - { name: nearLng, in: query, schema: { type: number } }
+        - { name: radiusKm, in: query, schema: { type: number, default: 25 } }
+        - { name: sort, in: query, schema: { type: string, enum: [startsAt, '-startsAt'], default: startsAt } }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Página de eventos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/EventSummary' }
+                  meta: { $ref: '#/components/schemas/CursorMeta' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+  /events/{eventId}:
+    get:
+      tags: [catalog]
+      operationId: getEvent
+      summary: Detalle del evento
+      security: []
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      responses:
+        '200':
+          description: Detalle
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/EventDetail' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /events/{eventId}/exchange-listings:
+    get:
+      tags: [catalog, exchange]
+      operationId: listEventExchangeListings
+      summary: Marketplace del Exchange (solo listings PUBLISHED — O4)
+      security: []
+      parameters:
+        - { $ref: '#/components/parameters/EventId' }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Página de publicaciones
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ListingResponse' }
+                  meta: { $ref: '#/components/schemas/CursorMeta' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /events/{eventId}/parkings:
+    get:
+      tags: [catalog]
+      operationId: listEventParkings
+      summary: Estacionamientos del evento con disponibilidad
+      security: []
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      responses:
+        '200':
+          description: Estacionamientos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ParkingSummary' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /categories:
+    get:
+      tags: [catalog]
+      operationId: listCategories
+      summary: Categorías activas
+      security: []
+      responses:
+        '200':
+          description: Categorías
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/CategoryDto' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+
+  # ======================= ORDERS =======================
+  /orders:
+    post:
+      tags: [orders]
+      operationId: createOrder
+      summary: Crea una orden (boletos, parking, exchange) — precios los fija el servidor
+      parameters:
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+        - { $ref: '#/components/parameters/CorrelationId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateOrderRequest' }
+            example:
+              items:
+                - { type: TICKET, referenceId: 3f1c9a2e-1111-4a1a-9d0e-aa0000000001, quantity: 2 }
+                - { type: PARKING, referenceId: 3f1c9a2e-2222-4a1a-9d0e-aa0000000002, quantity: 1 }
+      responses:
+        '201':
+          description: Orden PENDING con ventana de pago
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/OrderResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+    get:
+      tags: [orders]
+      operationId: listOrders
+      summary: Mis órdenes
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/OrderStatus' } }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Página de órdenes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/OrderResponse' }
+                  meta: { $ref: '#/components/schemas/CursorMeta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /orders/{orderId}:
+    get:
+      tags: [orders]
+      operationId: getOrder
+      summary: Detalle de mi orden
+      parameters: [{ $ref: '#/components/parameters/OrderId' }]
+      responses:
+        '200':
+          description: Orden
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/OrderResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /orders/{orderId}/pay:
+    post:
+      tags: [orders]
+      operationId: payOrder
+      summary: Ejecuta el pago de la orden
+      parameters:
+        - { $ref: '#/components/parameters/OrderId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PayOrderRequest' }
+      responses:
+        '200':
+          description: Orden pagada; boletos emitidos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/OrderResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '402': { $ref: '#/components/responses/PaymentRequired' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /orders/{orderId}/cancel:
+    post:
+      tags: [orders]
+      operationId: cancelOrder
+      summary: Cancela una orden PENDING
+      parameters: [{ $ref: '#/components/parameters/OrderId' }]
+      responses:
+        '200':
+          description: Orden cancelada; inventario liberado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/OrderResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ======================= TICKETS =======================
+  /tickets:
+    get:
+      tags: [tickets]
+      operationId: listMyTickets
+      summary: Mis boletos (propietario actual)
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/TicketStatus' } }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Página de boletos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/TicketResponse' }
+                  meta: { $ref: '#/components/schemas/CursorMeta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /tickets/{ticketId}:
+    get:
+      tags: [tickets]
+      operationId: getTicket
+      summary: Detalle e historial de mi boleto
+      parameters: [{ $ref: '#/components/parameters/TicketId' }]
+      responses:
+        '200':
+          description: Boleto
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TicketDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /tickets/{ticketId}/qr:
+    get:
+      tags: [tickets]
+      operationId: getTicketQr
+      summary: QR dinámico (solo dentro de la ventana de visibilidad)
+      parameters: [{ $ref: '#/components/parameters/TicketId' }]
+      responses:
+        '200':
+          description: QR activo
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/QrResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /tickets/{ticketId}/recovery-options:
+    get:
+      tags: [tickets]
+      operationId: getRecoveryOptions
+      summary: Cancelación inteligente — única acción válida según políticas y ADR-19
+      parameters: [{ $ref: '#/components/parameters/TicketId' }]
+      responses:
+        '200':
+          description: Opción de recuperación
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/RecoveryOptionsResponse' }
+              example:
+                data:
+                  ticketId: 9f2c0000-0000-4000-8000-000000000001
+                  option: EXCHANGE
+                  reason: ACQUIRED_VIA_EXCHANGE
+                  refund: null
+                  exchange:
+                    originalPrice: { amount: '80.00', currency: USD }
+                    depreciationPct: 10
+                    listPrice: { amount: '72.00', currency: USD }
+                    listingDeadline: '2026-08-14T00:00:00Z'
+                  links: { action: /api/v1/tickets/9f2c0000-0000-4000-8000-000000000001/exchange-listings }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /tickets/{ticketId}/refund-requests:
+    post:
+      tags: [tickets]
+      operationId: requestRefund
+      summary: Solicita reembolso (solo acquiredVia=PRIMARY — ADR-19)
+      parameters:
+        - { $ref: '#/components/parameters/TicketId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateRefundRequest' }
+      responses:
+        '201':
+          description: Solicitud creada; QR bloqueado
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/RefundResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /tickets/{ticketId}/exchange-listings:
+    post:
+      tags: [tickets, exchange]
+      operationId: publishTicketToExchange
+      summary: Publica el boleto en el Exchange (precio calculado por el servidor)
+      parameters:
+        - { $ref: '#/components/parameters/TicketId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      responses:
+        '201':
+          description: Publicado (o retenido para waitlist); QR bloqueado
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/MyListingResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+
+  # ======================= EXCHANGE =======================
+  /exchange-listings/{listingId}/reservations:
+    post:
+      tags: [exchange]
+      operationId: reserveListing
+      summary: Reserva temporal del listing (paso previo a la orden)
+      parameters:
+        - { $ref: '#/components/parameters/ListingId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      responses:
+        '201':
+          description: Reservado; completar con POST /orders (EXCHANGE_TICKET)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CreateReservationResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /exchange-listings/{listingId}:
+    delete:
+      tags: [exchange]
+      operationId: cancelListing
+      summary: El vendedor cancela su publicación (el boleto vuelve a ACTIVE, QR nuevo)
+      parameters: [{ $ref: '#/components/parameters/ListingId' }]
+      responses:
+        '204': { description: Publicación cancelada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /me/exchange-listings:
+    get:
+      tags: [exchange, me]
+      operationId: listMyListings
+      summary: Mis publicaciones en el Exchange
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/ListingStatus' } }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Página de publicaciones propias
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/MyListingResponse' }
+                  meta: { $ref: '#/components/schemas/CursorMeta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+
+  # ======================= WAITLIST =======================
+  /events/{eventId}/waitlist:
+    post:
+      tags: [waitlist]
+      operationId: joinWaitlist
+      summary: Unirse a la lista de espera (evento SOLD_OUT)
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      responses:
+        '201':
+          description: Inscrito
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/WaitlistStatusResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+    delete:
+      tags: [waitlist]
+      operationId: leaveWaitlist
+      summary: Salir de la lista de espera
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      responses:
+        '204': { description: Fuera de la lista }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /me/waitlist:
+    get:
+      tags: [waitlist, me]
+      operationId: listMyWaitlist
+      summary: Mis listas de espera y posición
+      responses:
+        '200':
+          description: Entradas activas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/WaitlistStatusResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /me/waitlist-offers:
+    get:
+      tags: [waitlist, me]
+      operationId: listMyWaitlistOffers
+      summary: Mis ofertas activas con cuenta regresiva
+      responses:
+        '200':
+          description: Ofertas OFFERED vigentes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/WaitlistOfferResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /waitlist-offers/{offerId}/accept:
+    post:
+      tags: [waitlist]
+      operationId: acceptWaitlistOffer
+      summary: Acepta la oferta — crea la orden a pagar (fuente INVENTORY o EXCHANGE)
+      parameters:
+        - { $ref: '#/components/parameters/OfferId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      responses:
+        '201':
+          description: Orden creada con prioridad
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/AcceptOfferResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /waitlist-offers/{offerId}/decline:
+    post:
+      tags: [waitlist]
+      operationId: declineWaitlistOffer
+      summary: Declina la oferta (pasa al siguiente en la fila)
+      parameters: [{ $ref: '#/components/parameters/OfferId' }]
+      responses:
+        '204': { description: Oferta declinada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ======================= ME =======================
+  /me:
+    get:
+      tags: [me]
+      operationId: getProfile
+      summary: Mi perfil
+      responses:
+        '200':
+          description: Perfil
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/UserProfile' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+    put:
+      tags: [me]
+      operationId: updateProfile
+      summary: Actualiza mi perfil
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateProfileRequest' }
+      responses:
+        '200':
+          description: Perfil actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/UserProfile' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /me/devices:
+    post:
+      tags: [me]
+      operationId: registerDevice
+      summary: Registra token FCM del dispositivo
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RegisterDeviceRequest' }
+      responses:
+        '204': { description: Dispositivo registrado }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /me/favorites:
+    get:
+      tags: [me]
+      operationId: listFavorites
+      summary: Mis eventos favoritos
+      responses:
+        '200':
+          description: Favoritos
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/EventSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /me/favorites/{eventId}:
+    put:
+      tags: [me]
+      operationId: addFavorite
+      summary: Marca favorito (idempotente)
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      responses:
+        '204': { description: Favorito guardado }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [me]
+      operationId: removeFavorite
+      summary: Quita favorito (idempotente)
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      responses:
+        '204': { description: Favorito eliminado }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /me/notifications:
+    get:
+      tags: [me]
+      operationId: listNotifications
+      summary: Mis notificaciones
+      parameters:
+        - { name: unreadOnly, in: query, schema: { type: boolean, default: false } }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Página de notificaciones
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/NotificationResponse' }
+                  meta: { $ref: '#/components/schemas/CursorMeta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /me/notifications/{id}/read:
+    put:
+      tags: [me]
+      operationId: markNotificationRead
+      summary: Marca como leída (idempotente — O3)
+      parameters: [{ $ref: '#/components/parameters/GenericId' }]
+      responses:
+        '204': { description: Marcada como leída }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /me/parking-reservations:
+    get:
+      tags: [me]
+      operationId: listMyParkingReservations
+      summary: Mis reservas de estacionamiento
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/ParkingReservationStatus' } }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Página de reservas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ParkingReservationResponse' }
+                  meta: { $ref: '#/components/schemas/CursorMeta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+  /me/parking-reservations/{id}/qr:
+    get:
+      tags: [me]
+      operationId: getParkingReservationQr
+      summary: QR de mi reserva de parking (ventana de visibilidad)
+      parameters: [{ $ref: '#/components/parameters/GenericId' }]
+      responses:
+        '200':
+          description: QR activo
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/QrResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ======================= CHECK-IN =======================
+  /organizer/events/{eventId}/check-ins:
+    post:
+      tags: [checkin]
+      operationId: eventCheckIn
+      summary: Valida QR de entrada (ORGANIZER del evento o STAFF asignado)
+      parameters:
+        - { $ref: '#/components/parameters/EventId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CheckInRequest' }
+      responses:
+        '200':
+          description: Acceso concedido
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CheckInResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /organizer/parkings/{parkingId}/check-ins:
+    post:
+      tags: [checkin]
+      operationId: parkingCheckIn
+      summary: Entrada al parking (plaza RESERVED→OCCUPIED)
+      parameters:
+        - { $ref: '#/components/parameters/ParkingId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CheckInRequest' }
+      responses:
+        '200':
+          description: Entrada registrada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CheckInResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /organizer/parkings/{parkingId}/check-outs:
+    post:
+      tags: [checkin]
+      operationId: parkingCheckOut
+      summary: Salida del parking (plaza OCCUPIED→AVAILABLE)
+      parameters:
+        - { $ref: '#/components/parameters/ParkingId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CheckInRequest' }
+      responses:
+        '200':
+          description: Salida registrada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CheckInResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+
+  # ======================= ORGANIZER =======================
+  /organizer/events:
+    post:
+      tags: [organizer]
+      operationId: createEvent
+      summary: Crea evento en DRAFT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateEventRequest' }
+      responses:
+        '201':
+          description: Evento creado
+          headers:
+            Location: { schema: { type: string } }
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/EventDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+    get:
+      tags: [organizer]
+      operationId: listOrganizerEvents
+      summary: Mis eventos (organizador)
+      parameters:
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/EventStatus' } }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Página de eventos propios
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/EventSummary' }
+                  meta: { $ref: '#/components/schemas/CursorMeta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /organizer/events/{eventId}:
+    patch:
+      tags: [organizer]
+      operationId: updateEvent
+      summary: Edita evento (If-Match; publicado solo campos seguros)
+      parameters:
+        - { $ref: '#/components/parameters/EventId' }
+        - { $ref: '#/components/parameters/IfMatchVersion' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateEventRequest' }
+      responses:
+        '200':
+          description: Evento actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/EventDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+    delete:
+      tags: [organizer]
+      operationId: deleteEvent
+      summary: Elimina evento (soft; solo DRAFT)
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      responses:
+        '204': { description: Eliminado }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /organizer/events/{eventId}/publish:
+    post:
+      tags: [organizer]
+      operationId: publishEvent
+      summary: Publica el evento (DRAFT→PUBLISHED; requiere tarifas y política)
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      responses:
+        '200':
+          description: Publicado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/EventDetail' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /organizer/events/{eventId}/policy:
+    get:
+      tags: [organizer]
+      operationId: getEventPolicy
+      summary: Política completa del evento
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      responses:
+        '200':
+          description: Política
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/EventPolicyResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    put:
+      tags: [organizer]
+      operationId: updateEventPolicy
+      summary: Reemplaza la política (If-Match)
+      parameters:
+        - { $ref: '#/components/parameters/EventId' }
+        - { $ref: '#/components/parameters/IfMatchVersion' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/EventPolicyRequest' }
+      responses:
+        '200':
+          description: Política actualizada (no afecta boletos ya vendidos — ADR-03)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/EventPolicyResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /organizer/events/{eventId}/ticket-types:
+    post:
+      tags: [organizer]
+      operationId: createTicketType
+      summary: Crea tarifa/tipo de boleto
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateTicketTypeRequest' }
+      responses:
+        '201':
+          description: Tarifa creada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TicketTypeDto' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /organizer/events/{eventId}/ticket-types/{id}:
+    patch:
+      tags: [organizer]
+      operationId: updateTicketType
+      summary: Edita tarifa (restringido si hay vendidos)
+      parameters:
+        - { $ref: '#/components/parameters/EventId' }
+        - { $ref: '#/components/parameters/GenericId' }
+        - { $ref: '#/components/parameters/IfMatchVersion' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateTicketTypeRequest' }
+      responses:
+        '200':
+          description: Tarifa actualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TicketTypeDto' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [organizer]
+      operationId: deleteTicketType
+      summary: Elimina tarifa (solo sin ventas)
+      parameters:
+        - { $ref: '#/components/parameters/EventId' }
+        - { $ref: '#/components/parameters/GenericId' }
+      responses:
+        '204': { description: Eliminada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /organizer/events/{eventId}/zones:
+    post:
+      tags: [organizer]
+      operationId: createZone
+      summary: Crea zona
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateZoneRequest' }
+      responses:
+        '201':
+          description: Zona creada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/ZoneDto' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /organizer/events/{eventId}/zones/{id}:
+    delete:
+      tags: [organizer]
+      operationId: deleteZone
+      summary: Elimina zona (sin tarifas asociadas)
+      parameters:
+        - { $ref: '#/components/parameters/EventId' }
+        - { $ref: '#/components/parameters/GenericId' }
+      responses:
+        '204': { description: Eliminada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /organizer/events/{eventId}/parkings:
+    post:
+      tags: [organizer]
+      operationId: createParking
+      summary: Crea estacionamiento (genera sus plazas)
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateParkingRequest' }
+      responses:
+        '201':
+          description: Estacionamiento creado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/ParkingSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/UnprocessableEntity' }
+  /organizer/events/{eventId}/parkings/{id}:
+    patch:
+      tags: [organizer]
+      operationId: updateParking
+      summary: Edita estacionamiento (If-Match)
+      parameters:
+        - { $ref: '#/components/parameters/EventId' }
+        - { $ref: '#/components/parameters/GenericId' }
+        - { $ref: '#/components/parameters/IfMatchVersion' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateParkingRequest' }
+      responses:
+        '200':
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/ParkingSummary' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [organizer]
+      operationId: deleteParking
+      summary: Elimina estacionamiento (sin reservas vigentes)
+      parameters:
+        - { $ref: '#/components/parameters/EventId' }
+        - { $ref: '#/components/parameters/GenericId' }
+      responses:
+        '204': { description: Eliminado }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /organizer/events/{eventId}/refund-requests:
+    get:
+      tags: [organizer]
+      operationId: listEventRefundRequests
+      summary: Bandeja de reembolsos del evento
+      parameters:
+        - { $ref: '#/components/parameters/EventId' }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/RefundStatus' } }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Página de solicitudes
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/RefundResponse' }
+                  meta: { $ref: '#/components/schemas/CursorMeta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /refund-requests/{refundId}/approve:
+    post:
+      tags: [organizer]
+      operationId: approveRefund
+      summary: Aprueba el reembolso (devuelve 100%, boleto a inventario, prioridad waitlist)
+      parameters:
+        - { $ref: '#/components/parameters/RefundId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      responses:
+        '200':
+          description: Reembolsado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/RefundResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /refund-requests/{refundId}/reject:
+    post:
+      tags: [organizer]
+      operationId: rejectRefund
+      summary: Rechaza el reembolso (boleto vuelve a ACTIVE)
+      parameters:
+        - { $ref: '#/components/parameters/RefundId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RejectRefundRequest' }
+      responses:
+        '200':
+          description: Rechazado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/RefundResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /organizer/tickets/{ticketId}/invalidate:
+    post:
+      tags: [organizer]
+      operationId: invalidateTicket
+      summary: Invalida un boleto (QR inválido; estado terminal)
+      parameters:
+        - { $ref: '#/components/parameters/TicketId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      responses:
+        '200':
+          description: Invalidado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TicketResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /organizer/tickets/{ticketId}/reissue:
+    post:
+      tags: [organizer]
+      operationId: reissueTicket
+      summary: Reemite el boleto (invalida QR anterior, genera nuevo)
+      parameters:
+        - { $ref: '#/components/parameters/TicketId' }
+        - { $ref: '#/components/parameters/IdempotencyKey' }
+      responses:
+        '200':
+          description: Reemitido
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/TicketResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /organizer/events/{eventId}/staff:
+    post:
+      tags: [organizer]
+      operationId: assignStaff
+      summary: Asigna staff de acceso (por email)
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AssignStaffRequest' }
+      responses:
+        '201': { description: Staff asignado }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /organizer/events/{eventId}/staff/{userId}:
+    delete:
+      tags: [organizer]
+      operationId: revokeStaff
+      summary: Revoca asignación de staff
+      parameters:
+        - { $ref: '#/components/parameters/EventId' }
+        - { $ref: '#/components/parameters/UserId' }
+      responses:
+        '204': { description: Revocado }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /organizer/events/{eventId}/stats:
+    get:
+      tags: [organizer]
+      operationId: getEventStats
+      summary: Estadísticas del evento (fuente ledger)
+      parameters: [{ $ref: '#/components/parameters/EventId' }]
+      responses:
+        '200':
+          description: Métricas
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/EventStatsResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /organizer/dashboard:
+    get:
+      tags: [organizer]
+      operationId: getOrganizerDashboard
+      summary: Dashboard del organizador (series para gráficas)
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/OrganizerDashboardResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+  # ======================= ADMIN =======================
+  /admin/users:
+    get:
+      tags: [admin]
+      operationId: listUsers
+      summary: Usuarios de la plataforma
+      parameters:
+        - { name: q, in: query, schema: { type: string } }
+        - { name: role, in: query, schema: { $ref: '#/components/schemas/RoleCode' } }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/UserStatus' } }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: Página de usuarios
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/AdminUserResponse' }
+                  meta: { $ref: '#/components/schemas/CursorMeta' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/users/{userId}:
+    get:
+      tags: [admin]
+      operationId: getUser
+      summary: Detalle de usuario
+      parameters: [{ $ref: '#/components/parameters/UserId' }]
+      responses:
+        '200':
+          description: Usuario
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/AdminUserResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [admin]
+      operationId: updateUser
+      summary: Actualiza estado/roles (If-Match)
+      parameters:
+        - { $ref: '#/components/parameters/UserId' }
+        - { $ref: '#/components/parameters/IfMatchVersion' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AdminUpdateUserRequest' }
+      responses:
+        '200':
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/AdminUserResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+    delete:
+      tags: [admin]
+      operationId: deleteUser
+      summary: Elimina usuario (soft delete)
+      parameters: [{ $ref: '#/components/parameters/UserId' }]
+      responses:
+        '204': { description: Eliminado (lógico) }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/categories:
+    post:
+      tags: [admin]
+      operationId: createCategory
+      summary: Crea categoría
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryRequest' }
+      responses:
+        '201':
+          description: Creada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CategoryDto' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /admin/categories/{id}:
+    patch:
+      tags: [admin]
+      operationId: updateCategory
+      summary: Edita categoría
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CategoryRequest' }
+      responses:
+        '200':
+          description: Actualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/CategoryDto' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [admin]
+      operationId: deleteCategory
+      summary: Elimina categoría (409 si está en uso)
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: integer } }
+      responses:
+        '204': { description: Eliminada }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /admin/sponsors:
+    post:
+      tags: [admin]
+      operationId: createSponsor
+      summary: Crea patrocinador
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SponsorRequest' }
+      responses:
+        '201':
+          description: Creado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/SponsorDto' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/sponsors/{id}:
+    patch:
+      tags: [admin]
+      operationId: updateSponsor
+      summary: Edita patrocinador
+      parameters: [{ $ref: '#/components/parameters/GenericId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SponsorRequest' }
+      responses:
+        '200':
+          description: Actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/SponsorDto' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      tags: [admin]
+      operationId: deleteSponsor
+      summary: Elimina patrocinador
+      parameters: [{ $ref: '#/components/parameters/GenericId' }]
+      responses:
+        '204': { description: Eliminado }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /admin/config:
+    get:
+      tags: [admin]
+      operationId: listConfig
+      summary: Configuración global
+      responses:
+        '200':
+          description: Entradas de configuración
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/GlobalConfigEntry' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /admin/config/{key}:
+    put:
+      tags: [admin]
+      operationId: updateConfig
+      summary: Actualiza una clave (If-Match; sin cambios de código)
+      parameters:
+        - { name: key, in: path, required: true, schema: { type: string } }
+        - { $ref: '#/components/parameters/IfMatchVersion' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value]
+              properties:
+                value: { type: object, additionalProperties: true }
+                description: { type: [string, 'null'] }
+      responses:
+        '200':
+          description: Actualizada
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/GlobalConfigEntry' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /admin/dashboard:
+    get:
+      tags: [admin]
+      operationId: getAdminDashboard
+      summary: Dashboard global (series para gráficas)
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+      responses:
+        '200':
+          description: Dashboard
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data: { $ref: '#/components/schemas/AdminDashboardResponse' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
