@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.eventflow.demo.DemoSeedIT" tests="1" skipped="0" failures="0" errors="0" timestamp="2026-07-12T18:56:42.571Z" hostname="MacBook-Air-de-Andres.local" time="0.275">
+  <properties/>
+  <testcase name="seed_populates_catalog_and_is_idempotent()" classname="com.eventflow.demo.DemoSeedIT" time="0.275"/>
+  <system-out><![CDATA[13:56:35.943 [Test worker] INFO org.testcontainers.images.PullPolicy -- Image pull policy will be performed by: DefaultPullPolicy()
+13:56:35.947 [Test worker] INFO org.testcontainers.utility.ImageNameSubstitutor -- Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
+13:56:35.953 [Test worker] INFO org.testcontainers.DockerClientFactory -- Testcontainers version: 1.21.3
+13:56:36.329 [Test worker] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Found Docker environment with Environment variables, system properties and defaults. Resolved dockerHost=unix:///Users/andresvega/.docker/run/docker.sock
+13:56:36.330 [Test worker] INFO org.testcontainers.DockerClientFactory -- Docker host IP address is localhost
+13:56:36.342 [Test worker] INFO org.testcontainers.DockerClientFactory -- Connected to docker: 
+  Server Version: 29.4.0
+  API Version: 1.54
+  Operating System: Docker Desktop
+  Total Memory: 7936 MB
+  Labels: 
+    com.docker.desktop.address=unix:///Users/andresvega/Library/Containers/com.docker.docker/Data/docker-cli.sock
+13:56:36.436 [Test worker] INFO tc.testcontainers/ryuk:0.12.0 -- Creating container for image: testcontainers/ryuk:0.12.0
+13:56:36.573 [Test worker] INFO org.testcontainers.utility.RegistryAuthLocator -- Credential helper/store (docker-credential-desktop) does not have credentials for https://index.docker.io/v1/
+13:56:36.655 [Test worker] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 is starting: 7dc9b0b3a40d937b19aa356b894b650fa6582f9514f0cebd6688b34cb08c209a
+13:56:36.831 [Test worker] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 started in PT0.395573S
+13:56:36.845 [Test worker] INFO org.testcontainers.utility.RyukResourceReaper -- Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
+13:56:36.845 [Test worker] INFO org.testcontainers.DockerClientFactory -- Checking the system...
+13:56:36.846 [Test worker] INFO org.testcontainers.DockerClientFactory -- ✔︎ Docker server version should be at least 1.6.0
+13:56:36.847 [Test worker] INFO tc.postgres:17 -- Creating container for image: postgres:17
+13:56:36.922 [Test worker] INFO tc.postgres:17 -- Container postgres:17 is starting: fffdadbc70b55c6d0e8892f401f667f45939411f72c8a3bd2b7cebd2aa0898cb
+13:56:37.578 [Test worker] INFO tc.postgres:17 -- Container postgres:17 started in PT0.731374S
+13:56:37.579 [Test worker] INFO tc.postgres:17 -- Container is started (JDBC URL: jdbc:postgresql://localhost:49939/test?loggerLevel=OFF)
+13:56:37.651 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.eventflow.demo.DemoSeedIT]: DemoSeedIT does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+13:56:37.725 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.eventflow.EventFlowApplication for test class com.eventflow.demo.DemoSeedIT
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.6)
+
+2026-07-12T13:56:37.951-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeedIT            : Starting DemoSeedIT using Java 17.0.19 with PID 55204 (started by andresvega in /Users/andresvega/IdeaProjects/EventFlow/backend)
+2026-07-12T13:56:37.952-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeedIT            : The following 1 profile is active: "demo"
+2026-07-12T13:56:38.536-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-07-12T13:56:38.575-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 34 ms. Found 12 JPA repository interfaces.
+2026-07-12T13:56:39.017-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:49939/test?loggerLevel=OFF (PostgreSQL 17.10)
+2026-07-12T13:56:39.044-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-07-12T13:56:39.046-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbValidate     : Successfully validated 9 migrations (execution time 00:00.013s)
+2026-07-12T13:56:39.057-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "public"."flyway_schema_history" ...
+2026-07-12T13:56:39.101-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Current version of schema "public": << Empty Schema >>
+2026-07-12T13:56:39.106-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - schemas and extensions"
+2026-07-12T13:56:39.132-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "2 - identity"
+2026-07-12T13:56:39.148-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "3 - catalog"
+2026-07-12T13:56:39.165-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "4 - ticketing"
+2026-07-12T13:56:39.184-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "5 - commerce"
+2026-07-12T13:56:39.210-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "6 - parking"
+2026-07-12T13:56:39.222-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "7 - ops"
+2026-07-12T13:56:39.248-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "8 - privileges and rls"
+2026-07-12T13:56:39.269-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "9 - seed"
+2026-07-12T13:56:39.280-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Successfully applied 9 migrations to schema "public", now at version v9 (execution time 00:00.103s)
+2026-07-12T13:56:39.363-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-07-12T13:56:39.411-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.29.Final
+2026-07-12T13:56:39.437-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-07-12T13:56:39.690-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-07-12T13:56:39.712-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-07-12T13:56:39.741-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@1c27d4d9
+2026-07-12T13:56:39.742-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-07-12T13:56:39.812-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+	Database driver: undefined/unknown
+	Database version: 17.10
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-07-12T13:56:40.592-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-07-12T13:56:40.593-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-07-12T13:56:40.759-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-07-12T13:56:41.672-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-07-12T13:56:41.690-05:00  WARN [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 4c47583d-2304-4f7d-84cb-5eef6ae7468b
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-07-12T13:56:41.694-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-07-12T13:56:41.949-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeedIT            : Started DemoSeedIT in 4.157 seconds (process running for 6.563)
+2026-07-12T13:56:41.962-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed_start
+2026-07-12T13:56:42.179-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed user creado email=demo-admin@eventflow.dev
+2026-07-12T13:56:42.253-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed user creado email=demo-organizer@eventflow.dev
+2026-07-12T13:56:42.325-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed user creado email=demo-user@eventflow.dev
+2026-07-12T13:56:42.335-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed categoria creada name=Conciertos
+2026-07-12T13:56:42.337-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed categoria creada name=Deportes
+2026-07-12T13:56:42.338-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed categoria creada name=Teatro
+2026-07-12T13:56:42.339-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed categoria creada name=Tecnología
+2026-07-12T13:56:42.342-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed sponsor creado name=Acme Bebidas
+2026-07-12T13:56:42.343-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed sponsor creado name=Global Bank
+2026-07-12T13:56:42.345-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed sponsor creado name=Nimbus Telecom
+2026-07-12T13:56:42.434-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed evento publicado title=Festival Ritmo Urbano
+2026-07-12T13:56:42.476-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed evento publicado title=Clásico Nacional de Fútbol
+2026-07-12T13:56:42.504-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed evento publicado title=La Casa de Bernarda Alba
+2026-07-12T13:56:42.538-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed evento publicado title=DevConf Panamá 2026
+2026-07-12T13:56:42.561-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed evento publicado title=Noche Sinfónica bajo las Estrellas
+2026-07-12T13:56:42.564-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed_done admin=019f57b0-5675-72a5-a902-741e49d5c1b0 organizer=019f57b0-5704-7de6-9bb6-29c30e1338f0 attendee=019f57b0-574b-7215-8541-11618f8cd5eb
+2026-07-12T13:56:42.831-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed_start
+2026-07-12T13:56:42.838-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.eventflow.demo.DemoSeeder            : demo_seed_done admin=019f57b0-5675-72a5-a902-741e49d5c1b0 organizer=019f57b0-5704-7de6-9bb6-29c30e1338f0 attendee=019f57b0-574b-7215-8541-11618f8cd5eb
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

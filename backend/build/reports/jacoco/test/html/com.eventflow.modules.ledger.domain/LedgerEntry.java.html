@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>LedgerEntry.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.ledger.domain</a> &gt; <span class="el_source">LedgerEntry.java</span></div><h1>LedgerEntry.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.ledger.domain;
+
+import com.eventflow.shared.domain.Money;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Asiento de partida doble, append-only (ADR-14; inmutable a nivel BD por REVOKE en V8).
+ * Cuentas: PLATFORM | BUYER:&lt;uuid&gt; | SELLER:&lt;uuid&gt; | ORGANIZER:&lt;uuid&gt;.
+ */
+@Entity
+@Table(name = &quot;ledger_entries&quot;, schema = &quot;commerce&quot;)
+public class LedgerEntry {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(name = &quot;entry_type&quot;, nullable = false, updatable = false)
+    private String entryType;
+
+    @Column(name = &quot;source_account&quot;, nullable = false, updatable = false)
+    private String sourceAccount;
+
+    @Column(name = &quot;destination_account&quot;, nullable = false, updatable = false)
+    private String destinationAccount;
+
+    @Column(nullable = false, updatable = false)
+    private BigDecimal amount;
+
+    @Column(nullable = false, updatable = false, columnDefinition = &quot;char(3)&quot;)
+    private String currency;
+
+    @Column(name = &quot;fee_amount&quot;, updatable = false)
+    private BigDecimal feeAmount;
+
+    @Column(name = &quot;reference_type&quot;, nullable = false, updatable = false)
+    private String referenceType;
+
+    @Column(name = &quot;reference_id&quot;, nullable = false, updatable = false)
+    private UUID referenceId;
+
+    @Column(name = &quot;event_id&quot;, updatable = false)
+    private UUID eventId;
+
+    @CreationTimestamp
+    @Column(name = &quot;occurred_at&quot;, nullable = false, updatable = false)
+    private Instant occurredAt;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(updatable = false)
+    private Map&lt;String, Object&gt; details;
+
+<span class="fc" id="L66">    protected LedgerEntry() {</span>
+<span class="fc" id="L67">    }</span>
+
+    private LedgerEntry(String entryType, String sourceAccount, String destinationAccount, Money amount,
+                        Money fee, String referenceType, UUID referenceId, UUID eventId,
+<span class="fc" id="L71">                        Map&lt;String, Object&gt; details) {</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (sourceAccount.equals(destinationAccount)) {</span>
+<span class="nc" id="L73">            throw new IllegalArgumentException(&quot;Las cuentas origen y destino deben diferir&quot;);</span>
+        }
+<span class="pc bpc" id="L75" title="1 of 2 branches missed.">        if (amount.amount().signum() &lt;= 0) {</span>
+<span class="nc" id="L76">            throw new IllegalArgumentException(&quot;El asiento requiere amount &gt; 0&quot;);</span>
+        }
+<span class="fc" id="L78">        this.entryType = entryType;</span>
+<span class="fc" id="L79">        this.sourceAccount = sourceAccount;</span>
+<span class="fc" id="L80">        this.destinationAccount = destinationAccount;</span>
+<span class="fc" id="L81">        this.amount = amount.amount();</span>
+<span class="fc" id="L82">        this.currency = amount.currency();</span>
+<span class="pc bpc" id="L83" title="1 of 2 branches missed.">        this.feeAmount = fee == null ? null : fee.amount();</span>
+<span class="fc" id="L84">        this.referenceType = referenceType;</span>
+<span class="fc" id="L85">        this.referenceId = referenceId;</span>
+<span class="fc" id="L86">        this.eventId = eventId;</span>
+<span class="fc" id="L87">        this.details = details;</span>
+<span class="fc" id="L88">    }</span>
+
+    /** Venta primaria: BUYER → ORGANIZER por el subtotal del evento dentro de la orden (fee 0 en v1). */
+    public static LedgerEntry sale(UUID buyerId, UUID organizerId, Money amount, UUID orderId, UUID eventId,
+                                   Map&lt;String, Object&gt; details) {
+<span class="fc" id="L93">        return new LedgerEntry(&quot;SALE&quot;, &quot;BUYER:&quot; + buyerId, &quot;ORGANIZER:&quot; + organizerId, amount,</span>
+                null, &quot;ORDER&quot;, orderId, eventId, details);
+    }
+
+    public String getEntryType() {
+<span class="nc" id="L98">        return entryType;</span>
+    }
+
+    public String getSourceAccount() {
+<span class="nc" id="L102">        return sourceAccount;</span>
+    }
+
+    public String getDestinationAccount() {
+<span class="nc" id="L106">        return destinationAccount;</span>
+    }
+
+    public Money getAmount() {
+<span class="nc" id="L110">        return new Money(amount, currency);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

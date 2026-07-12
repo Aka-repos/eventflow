@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.eventflow.modules.ordering.infrastructure.OrderConcurrencyIT" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-07-12T18:56:54.181Z" hostname="MacBook-Air-de-Andres.local" time="0.085">
+  <properties/>
+  <testcase name="t1_concurrent_purchases_never_oversell()" classname="com.eventflow.modules.ordering.infrastructure.OrderConcurrencyIT" time="0.06"/>
+  <testcase name="t2_concurrent_double_pay_settles_exactly_once()" classname="com.eventflow.modules.ordering.infrastructure.OrderConcurrencyIT" time="0.025"/>
+  <system-out><![CDATA[2026-07-12T13:56:52.105-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Creating container for image: postgres:17
+2026-07-12T13:56:52.140-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Container postgres:17 is starting: 04d98142d18210be620357be8e7b5e82abbf3f0558abc48c68388fa47ee8b7c1
+2026-07-12T13:56:52.686-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Container postgres:17 started in PT0.581254S
+2026-07-12T13:56:52.686-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Container is started (JDBC URL: jdbc:postgresql://localhost:50068/test?loggerLevel=OFF)
+2026-07-12T13:56:52.687-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.eventflow.modules.ordering.infrastructure.OrderConcurrencyIT]: OrderConcurrencyIT does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-07-12T13:56:52.696-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.eventflow.EventFlowApplication for test class com.eventflow.modules.ordering.infrastructure.OrderConcurrencyIT
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.6)
+
+2026-07-12T13:56:52.709-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] c.e.m.o.i.OrderConcurrencyIT             : Starting OrderConcurrencyIT using Java 17.0.19 with PID 55204 (started by andresvega in /Users/andresvega/IdeaProjects/EventFlow/backend)
+2026-07-12T13:56:52.709-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] c.e.m.o.i.OrderConcurrencyIT             : No active profile set, falling back to 1 default profile: "default"
+2026-07-12T13:56:52.793-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-07-12T13:56:52.804-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 10 ms. Found 12 JPA repository interfaces.
+2026-07-12T13:56:52.876-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:50068/test?loggerLevel=OFF (PostgreSQL 17.10)
+2026-07-12T13:56:52.881-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-07-12T13:56:52.882-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbValidate     : Successfully validated 9 migrations (execution time 00:00.002s)
+2026-07-12T13:56:52.885-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "public"."flyway_schema_history" ...
+2026-07-12T13:56:52.896-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Current version of schema "public": << Empty Schema >>
+2026-07-12T13:56:52.897-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - schemas and extensions"
+2026-07-12T13:56:52.907-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "2 - identity"
+2026-07-12T13:56:52.916-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "3 - catalog"
+2026-07-12T13:56:52.928-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "4 - ticketing"
+2026-07-12T13:56:52.944-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "5 - commerce"
+2026-07-12T13:56:52.966-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "6 - parking"
+2026-07-12T13:56:52.974-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "7 - ops"
+2026-07-12T13:56:52.986-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "8 - privileges and rls"
+2026-07-12T13:56:52.994-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "9 - seed"
+2026-07-12T13:56:52.997-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Successfully applied 9 migrations to schema "public", now at version v9 (execution time 00:00.066s)
+2026-07-12T13:56:53.008-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-07-12T13:56:53.009-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-07-12T13:56:53.012-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-07-12T13:56:53.012-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Starting...
+2026-07-12T13:56:53.019-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-5 - Added connection org.postgresql.jdbc.PgConnection@4bfd6a35
+2026-07-12T13:56:53.019-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-5 - Start completed.
+2026-07-12T13:56:53.021-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-5)']
+	Database driver: undefined/unknown
+	Database version: 17.10
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-07-12T13:56:53.060-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-07-12T13:56:53.060-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-07-12T13:56:53.195-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-07-12T13:56:53.201-05:00  WARN [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 3291ffcd-b00d-42a7-98ed-80ac619764e8
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-07-12T13:56:53.201-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-07-12T13:56:53.256-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] c.e.m.o.i.OrderConcurrencyIT             : Started OrderConcurrencyIT in 0.555 seconds (process running for 17.871)
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

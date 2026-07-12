@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderApiMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.ordering.api</a> &gt; <span class="el_source">OrderApiMapper.java</span></div><h1>OrderApiMapper.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.ordering.api;
+
+import com.eventflow.modules.ordering.api.dto.OrderDtos.OrderItemResponse;
+import com.eventflow.modules.ordering.api.dto.OrderDtos.OrderResponse;
+import com.eventflow.modules.ordering.api.dto.OrderDtos.PaymentSummaryDto;
+import com.eventflow.modules.ordering.application.result.OrderResult;
+import com.eventflow.modules.payments.application.PaymentResult;
+import com.eventflow.shared.web.MoneyDto;
+import org.springframework.stereotype.Component;
+
+import java.util.List;
+
+@Component
+<span class="fc" id="L14">class OrderApiMapper {</span>
+
+    OrderResponse toResponse(OrderResult result) {
+<span class="fc" id="L17">        List&lt;OrderItemResponse&gt; items = result.order().getItems().stream()</span>
+<span class="fc" id="L18">                .map(item -&gt; new OrderItemResponse(item.getId(), item.getItemType(),</span>
+<span class="fc" id="L19">                        result.descriptionsByItem().getOrDefault(item.getId(), &quot;&quot;),</span>
+<span class="fc" id="L20">                        item.getQuantity(), MoneyDto.from(item.getUnitPrice()),</span>
+<span class="fc" id="L21">                        result.ticketIdsByItem().get(item.getId())))</span>
+<span class="fc" id="L22">                .toList();</span>
+<span class="fc" id="L23">        PaymentResult payment = result.payment();</span>
+<span class="fc" id="L24">        return new OrderResponse(result.order().getId(), result.order().getStatus().name(),</span>
+<span class="fc" id="L25">                MoneyDto.from(result.order().getTotal()), result.order().getExpiresAt(),</span>
+<span class="fc" id="L26">                result.order().getCreatedAt(), items,</span>
+<span class="fc bfc" id="L27" title="All 2 branches covered.">                payment == null ? null : new PaymentSummaryDto(payment.id(), payment.provider(),</span>
+<span class="fc" id="L28">                        payment.status(), MoneyDto.from(payment.amount())));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

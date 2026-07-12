@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.eventflow.modules.identity.domain.UserTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-11T03:56:57.728Z" hostname="MacBook-Air-de-Andres.local" time="0.001">
+<testsuite name="com.eventflow.modules.identity.domain.UserTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-12T18:56:49.558Z" hostname="MacBook-Air-de-Andres.local" time="0.001">
   <properties/>
-  <testcase name="should_reject_authentication_when_blocked()" classname="com.eventflow.modules.identity.domain.UserTest" time="0.0"/>
-  <testcase name="should_register_active_attendee_with_uuid()" classname="com.eventflow.modules.identity.domain.UserTest" time="0.001"/>
+  <testcase name="should_reject_authentication_when_blocked()" classname="com.eventflow.modules.identity.domain.UserTest" time="0.001"/>
+  <testcase name="should_register_active_attendee_with_uuid()" classname="com.eventflow.modules.identity.domain.UserTest" time="0.0"/>
   <testcase name="should_allow_authentication_when_active()" classname="com.eventflow.modules.identity.domain.UserTest" time="0.0"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>

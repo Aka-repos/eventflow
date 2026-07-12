@@ -12,6 +12,8 @@ import androidx.navigation.compose.rememberNavController
 import com.app.eventflow.core.security.TokenStore
 import com.app.eventflow.ui.feature.auth.login.LoginRoute
 import com.app.eventflow.ui.feature.auth.register.RegisterRoute
+import com.app.eventflow.ui.feature.catalog.detail.EventDetailRoute
+import com.app.eventflow.ui.feature.checkout.CheckoutRoute
 import com.app.eventflow.ui.feature.home.HomeRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
@@ -21,6 +23,13 @@ object Routes {
     const val LOGIN = "login"
     const val REGISTER = "register"
     const val HOME = "home"
+    const val EVENT_DETAIL = "event/{eventId}"
+    const val CHECKOUT = "checkout/{eventId}/{tariffId}/{quantity}"
+
+    fun eventDetail(eventId: String) = "event/$eventId"
+
+    fun checkout(eventId: String, tariffId: String, quantity: Int) =
+        "checkout/$eventId/$tariffId/$quantity"
 }
 
 @HiltViewModel
@@ -56,7 +65,25 @@ fun EventFlowNavHost(
             )
         }
         composable(Routes.HOME) {
-            HomeRoute()
+            HomeRoute(
+                onNavigateToDetail = { eventId -> navController.navigate(Routes.eventDetail(eventId)) },
+            )
+        }
+        composable(Routes.EVENT_DETAIL) {
+            EventDetailRoute(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToCheckout = { eventId, tariffId ->
+                    navController.navigate(Routes.checkout(eventId, tariffId, 1))
+                },
+            )
+        }
+        composable(Routes.CHECKOUT) {
+            CheckoutRoute(
+                onNavigateToTickets = {
+                    navController.navigate(Routes.HOME) { popUpTo(Routes.HOME) { inclusive = true } }
+                },
+                onNavigateBack = { navController.popBackStack() },
+            )
         }
     }
 

@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.eventflow.modules.identity.application.RegisterUserUseCaseTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-07-11T03:56:57.679Z" hostname="MacBook-Air-de-Andres.local" time="0.045">
+<testsuite name="com.eventflow.modules.identity.application.RegisterUserUseCaseTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-07-12T18:56:49.522Z" hostname="MacBook-Air-de-Andres.local" time="0.034">
   <properties/>
-  <testcase name="should_reject_when_email_already_registered()" classname="com.eventflow.modules.identity.application.RegisterUserUseCaseTest" time="0.026"/>
-  <testcase name="should_register_attendee_and_issue_tokens_when_email_is_free()" classname="com.eventflow.modules.identity.application.RegisterUserUseCaseTest" time="0.019"/>
+  <testcase name="should_reject_when_email_already_registered()" classname="com.eventflow.modules.identity.application.RegisterUserUseCaseTest" time="0.024"/>
+  <testcase name="should_register_attendee_and_issue_tokens_when_email_is_free()" classname="com.eventflow.modules.identity.application.RegisterUserUseCaseTest" time="0.01"/>
   <system-out><![CDATA[]]></system-out>
   <system-err><![CDATA[]]></system-err>
 </testsuite>

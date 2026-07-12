@@ -133,10 +133,10 @@ class AuthFlowIT {
                 .at("/data/accessToken").asText();
 
         // Un endpoint protegido inexistente con token válido debe dar 404 (autenticado), no 401
-        mockMvc.perform(get("/tickets").header("Authorization", "Bearer " + accessToken))
+        mockMvc.perform(get("/recurso-inexistente").header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isNotFound());
         // Y sin token, 401 con problem
-        mockMvc.perform(get("/tickets"))
+        mockMvc.perform(get("/recurso-inexistente"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("unauthorized"));
     }

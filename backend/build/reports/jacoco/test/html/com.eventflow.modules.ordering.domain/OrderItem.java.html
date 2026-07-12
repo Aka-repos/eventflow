@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>OrderItem.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.ordering.domain</a> &gt; <span class="el_source">OrderItem.java</span></div><h1>OrderItem.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.ordering.domain;
+
+import com.eventflow.shared.domain.Money;
+import com.eventflow.shared.domain.Uuids;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+import java.math.BigDecimal;
+import java.util.UUID;
+
+/**
+ * Ítem polimórfico cerrado (auditoría I1): exactamente una referencia acorde al tipo.
+ * En el Módulo 3 solo se emite TICKET; PARKING (M8) y EXCHANGE_TICKET (M6) llegan después.
+ */
+@Entity
+@Table(name = &quot;order_items&quot;, schema = &quot;commerce&quot;)
+public class OrderItem {
+
+    @Id
+    private UUID id;
+
+    @Column(name = &quot;order_id&quot;, nullable = false, updatable = false)
+    private UUID orderId;
+
+    @Column(name = &quot;item_type&quot;, nullable = false, updatable = false)
+    private String itemType;
+
+    @Column(name = &quot;ticket_type_id&quot;, updatable = false)
+    private UUID ticketTypeId;
+
+    @Column(nullable = false, updatable = false)
+    private int quantity;
+
+    @Column(name = &quot;unit_price&quot;, nullable = false, updatable = false)
+    private BigDecimal unitPrice;
+
+    @Column(nullable = false, updatable = false, columnDefinition = &quot;char(3)&quot;)
+    private String currency;
+
+    @jakarta.persistence.Transient
+    private String description;
+
+<span class="fc" id="L45">    protected OrderItem() {</span>
+<span class="fc" id="L46">    }</span>
+
+    private OrderItem(UUID id, String itemType, UUID ticketTypeId, int quantity, Money unitPrice,
+<span class="fc" id="L49">                      String description) {</span>
+<span class="fc" id="L50">        this.id = id;</span>
+<span class="fc" id="L51">        this.itemType = itemType;</span>
+<span class="fc" id="L52">        this.ticketTypeId = ticketTypeId;</span>
+<span class="fc" id="L53">        this.quantity = quantity;</span>
+<span class="fc" id="L54">        this.unitPrice = unitPrice.amount();</span>
+<span class="fc" id="L55">        this.currency = unitPrice.currency();</span>
+<span class="fc" id="L56">        this.description = description;</span>
+<span class="fc" id="L57">    }</span>
+
+    public static OrderItem ticket(UUID ticketTypeId, int quantity, Money unitPrice, String description) {
+<span class="pc bpc" id="L60" title="2 of 4 branches missed.">        if (quantity &lt; 1 || quantity &gt; 10) {</span>
+<span class="nc" id="L61">            throw new IllegalArgumentException(&quot;quantity debe estar entre 1 y 10&quot;);</span>
+        }
+<span class="fc" id="L63">        return new OrderItem(Uuids.v7(), &quot;TICKET&quot;, ticketTypeId, quantity, unitPrice, description);</span>
+    }
+
+    void attachTo(UUID orderId) {
+<span class="fc" id="L67">        this.orderId = orderId;</span>
+<span class="fc" id="L68">    }</span>
+
+    public Money lineTotal() {
+<span class="fc" id="L71">        return new Money(unitPrice.multiply(BigDecimal.valueOf(quantity)), currency);</span>
+    }
+
+    public UUID getId() {
+<span class="fc" id="L75">        return id;</span>
+    }
+
+    public String getItemType() {
+<span class="fc" id="L79">        return itemType;</span>
+    }
+
+    public UUID getTicketTypeId() {
+<span class="fc" id="L83">        return ticketTypeId;</span>
+    }
+
+    public int getQuantity() {
+<span class="fc" id="L87">        return quantity;</span>
+    }
+
+    public Money getUnitPrice() {
+<span class="fc" id="L91">        return new Money(unitPrice, currency);</span>
+    }
+
+    /** Descripción armada por el servidor al crear (p. ej. &quot;VIP — Concierto X&quot;); transitoria. */
+    public String getDescription() {
+<span class="fc" id="L96">        return description;</span>
+    }
+
+    public void describeAs(String description) {
+<span class="nc" id="L100">        this.description = description;</span>
+<span class="nc" id="L101">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

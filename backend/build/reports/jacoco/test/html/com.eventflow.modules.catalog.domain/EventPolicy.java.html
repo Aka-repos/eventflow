@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventPolicy.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.catalog.domain</a> &gt; <span class="el_source">EventPolicy.java</span></div><h1>EventPolicy.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.catalog.domain;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import jakarta.persistence.Version;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.UpdateTimestamp;
+import org.hibernate.type.SqlTypes;
+
+import java.time.Instant;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Política configurable del evento (ADR-02), 1:1 con events (PK = FK). Se crea con defaults
+ * al crear el evento; el organizador la reemplaza vía PUT con If-Match (optimistic lock).
+ * ADR-03: cambiarla no afecta boletos ya vendidos (ellos llevan snapshot).
+ */
+@Entity
+@Table(name = &quot;event_policies&quot;, schema = &quot;catalog&quot;)
+public class EventPolicy {
+
+    @Id
+    @Column(name = &quot;event_id&quot;)
+    private UUID eventId;
+
+    @Column(name = &quot;refund_window_ends_at&quot;)
+    private Instant refundWindowEndsAt;
+
+    @Column(name = &quot;refund_pct&quot;, nullable = false)
+    private short refundPct;
+
+    @Column(name = &quot;exchange_enabled&quot;, nullable = false)
+    private boolean exchangeEnabled;
+
+    @Column(name = &quot;exchange_depreciation_pct&quot;, nullable = false)
+    private short exchangeDepreciationPct;
+
+    @Column(name = &quot;exchange_listing_deadline&quot;)
+    private Instant exchangeListingDeadline;
+
+    @Column(name = &quot;waitlist_enabled&quot;, nullable = false)
+    private boolean waitlistEnabled;
+
+    @Column(name = &quot;waitlist_offer_minutes&quot;, nullable = false)
+    private int waitlistOfferMinutes;
+
+    @Column(name = &quot;temp_reservation_minutes&quot;, nullable = false)
+    private int tempReservationMinutes;
+
+    @Column(name = &quot;qr_visibility_hours_before&quot;, nullable = false)
+    private int qrVisibilityHoursBefore;
+
+    @Column(name = &quot;qr_expiration_minutes&quot;, nullable = false)
+    private int qrExpirationMinutes;
+
+    @Column(name = &quot;cancellation_policy&quot;)
+    private String cancellationPolicy;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = &quot;extra_policies&quot;, nullable = false)
+    private Map&lt;String, Object&gt; extraPolicies;
+
+    @UpdateTimestamp
+    @Column(name = &quot;updated_at&quot;, nullable = false)
+    private Instant updatedAt;
+
+    @Version
+    @Column(nullable = false)
+    private int version;
+
+<span class="fc" id="L74">    protected EventPolicy() {</span>
+<span class="fc" id="L75">    }</span>
+
+<span class="fc" id="L77">    private EventPolicy(UUID eventId) {</span>
+<span class="fc" id="L78">        this.eventId = eventId;</span>
+<span class="fc" id="L79">        this.refundPct = 100;</span>
+<span class="fc" id="L80">        this.exchangeEnabled = false;</span>
+<span class="fc" id="L81">        this.exchangeDepreciationPct = 10;</span>
+<span class="fc" id="L82">        this.waitlistEnabled = false;</span>
+<span class="fc" id="L83">        this.waitlistOfferMinutes = 15;</span>
+<span class="fc" id="L84">        this.tempReservationMinutes = 10;</span>
+<span class="fc" id="L85">        this.qrVisibilityHoursBefore = 24;</span>
+<span class="fc" id="L86">        this.qrExpirationMinutes = 60;</span>
+<span class="fc" id="L87">        this.extraPolicies = Map.of();</span>
+<span class="fc" id="L88">    }</span>
+
+    /** Defaults espejo de la migración V3 — se crea junto con el evento. */
+    public static EventPolicy defaultsFor(UUID eventId) {
+<span class="fc" id="L92">        return new EventPolicy(eventId);</span>
+    }
+
+    /** PUT = reemplazo completo (el contrato exige todos los campos requeridos). */
+    public void replace(Instant refundWindowEndsAt, boolean exchangeEnabled, short exchangeDepreciationPct,
+                        Instant exchangeListingDeadline, boolean waitlistEnabled, int waitlistOfferMinutes,
+                        int tempReservationMinutes, int qrVisibilityHoursBefore, int qrExpirationMinutes,
+                        String cancellationPolicy, Map&lt;String, Object&gt; extraPolicies) {
+<span class="fc" id="L100">        requireRange(&quot;exchangeDepreciationPct&quot;, exchangeDepreciationPct, 0, 100);</span>
+<span class="fc" id="L101">        requirePositive(&quot;waitlistOfferMinutes&quot;, waitlistOfferMinutes);</span>
+<span class="fc" id="L102">        requirePositive(&quot;tempReservationMinutes&quot;, tempReservationMinutes);</span>
+<span class="fc" id="L103">        requirePositive(&quot;qrExpirationMinutes&quot;, qrExpirationMinutes);</span>
+<span class="pc bpc" id="L104" title="1 of 2 branches missed.">        if (qrVisibilityHoursBefore &lt; 0) {</span>
+<span class="nc" id="L105">            throw new IllegalArgumentException(&quot;qrVisibilityHoursBefore no puede ser negativo&quot;);</span>
+        }
+<span class="fc" id="L107">        this.refundWindowEndsAt = refundWindowEndsAt;</span>
+<span class="fc" id="L108">        this.exchangeEnabled = exchangeEnabled;</span>
+<span class="fc" id="L109">        this.exchangeDepreciationPct = exchangeDepreciationPct;</span>
+<span class="fc" id="L110">        this.exchangeListingDeadline = exchangeListingDeadline;</span>
+<span class="fc" id="L111">        this.waitlistEnabled = waitlistEnabled;</span>
+<span class="fc" id="L112">        this.waitlistOfferMinutes = waitlistOfferMinutes;</span>
+<span class="fc" id="L113">        this.tempReservationMinutes = tempReservationMinutes;</span>
+<span class="fc" id="L114">        this.qrVisibilityHoursBefore = qrVisibilityHoursBefore;</span>
+<span class="fc" id="L115">        this.qrExpirationMinutes = qrExpirationMinutes;</span>
+<span class="fc" id="L116">        this.cancellationPolicy = cancellationPolicy;</span>
+<span class="fc bfc" id="L117" title="All 2 branches covered.">        this.extraPolicies = extraPolicies == null ? Map.of() : Map.copyOf(extraPolicies);</span>
+<span class="fc" id="L118">    }</span>
+
+    private static void requireRange(String field, int value, int min, int max) {
+<span class="pc bpc" id="L121" title="2 of 4 branches missed.">        if (value &lt; min || value &gt; max) {</span>
+<span class="nc" id="L122">            throw new IllegalArgumentException(field + &quot; debe estar entre &quot; + min + &quot; y &quot; + max);</span>
+        }
+<span class="fc" id="L124">    }</span>
+
+    private static void requirePositive(String field, int value) {
+<span class="pc bpc" id="L127" title="1 of 2 branches missed.">        if (value &lt;= 0) {</span>
+<span class="nc" id="L128">            throw new IllegalArgumentException(field + &quot; debe ser positivo&quot;);</span>
+        }
+<span class="fc" id="L130">    }</span>
+
+    public UUID getEventId() {
+<span class="fc" id="L133">        return eventId;</span>
+    }
+
+    public Instant getRefundWindowEndsAt() {
+<span class="fc" id="L137">        return refundWindowEndsAt;</span>
+    }
+
+    public short getRefundPct() {
+<span class="fc" id="L141">        return refundPct;</span>
+    }
+
+    public boolean isExchangeEnabled() {
+<span class="fc" id="L145">        return exchangeEnabled;</span>
+    }
+
+    public short getExchangeDepreciationPct() {
+<span class="fc" id="L149">        return exchangeDepreciationPct;</span>
+    }
+
+    public Instant getExchangeListingDeadline() {
+<span class="fc" id="L153">        return exchangeListingDeadline;</span>
+    }
+
+    public boolean isWaitlistEnabled() {
+<span class="fc" id="L157">        return waitlistEnabled;</span>
+    }
+
+    public int getWaitlistOfferMinutes() {
+<span class="fc" id="L161">        return waitlistOfferMinutes;</span>
+    }
+
+    public int getTempReservationMinutes() {
+<span class="fc" id="L165">        return tempReservationMinutes;</span>
+    }
+
+    public int getQrVisibilityHoursBefore() {
+<span class="fc" id="L169">        return qrVisibilityHoursBefore;</span>
+    }
+
+    public int getQrExpirationMinutes() {
+<span class="fc" id="L173">        return qrExpirationMinutes;</span>
+    }
+
+    public String getCancellationPolicy() {
+<span class="fc" id="L177">        return cancellationPolicy;</span>
+    }
+
+    public Map&lt;String, Object&gt; getExtraPolicies() {
+<span class="fc" id="L181">        return extraPolicies;</span>
+    }
+
+    public int getVersion() {
+<span class="fc" id="L185">        return version;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

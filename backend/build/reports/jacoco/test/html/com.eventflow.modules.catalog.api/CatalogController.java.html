@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CatalogController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.catalog.api</a> &gt; <span class="el_source">CatalogController.java</span></div><h1>CatalogController.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.catalog.api;
+
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.CategoryDto;
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.EventDetailDto;
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.EventSummaryDto;
+import com.eventflow.modules.catalog.application.GetEventDetailUseCase;
+import com.eventflow.modules.catalog.application.ListCategoriesUseCase;
+import com.eventflow.modules.catalog.application.SearchEventsUseCase;
+import com.eventflow.modules.catalog.domain.port.EventListItem;
+import com.eventflow.modules.catalog.domain.port.EventSearchQuery;
+import com.eventflow.shared.error.SemanticValidationException;
+import com.eventflow.shared.security.AuthenticatedUser;
+import com.eventflow.shared.web.CursorPage;
+import com.eventflow.shared.web.DataResponse;
+import com.eventflow.shared.web.PageResponse;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+/** Tag catalog: operationIds listEvents, getEvent, listCategories (público; isFavorite si hay sesión). */
+@RestController
+class CatalogController {
+
+    private final SearchEventsUseCase searchEvents;
+    private final GetEventDetailUseCase getEventDetail;
+    private final ListCategoriesUseCase listCategories;
+    private final CatalogApiMapper mapper;
+
+    CatalogController(SearchEventsUseCase searchEvents, GetEventDetailUseCase getEventDetail,
+<span class="fc" id="L36">                      ListCategoriesUseCase listCategories, CatalogApiMapper mapper) {</span>
+<span class="fc" id="L37">        this.searchEvents = searchEvents;</span>
+<span class="fc" id="L38">        this.getEventDetail = getEventDetail;</span>
+<span class="fc" id="L39">        this.listCategories = listCategories;</span>
+<span class="fc" id="L40">        this.mapper = mapper;</span>
+<span class="fc" id="L41">    }</span>
+
+    @GetMapping(&quot;/events&quot;)
+    PageResponse&lt;EventSummaryDto&gt; listEvents(@RequestParam(required = false) String q,
+                                             @RequestParam(required = false) Integer categoryId,
+                                             @RequestParam(required = false) Instant dateFrom,
+                                             @RequestParam(required = false) Instant dateTo,
+                                             @RequestParam(required = false) Double nearLat,
+                                             @RequestParam(required = false) Double nearLng,
+                                             @RequestParam(required = false, defaultValue = &quot;25&quot;) double radiusKm,
+                                             @RequestParam(required = false, defaultValue = &quot;startsAt&quot;) String sort,
+                                             @RequestParam(required = false) String cursor,
+                                             @RequestParam(required = false, defaultValue = &quot;20&quot;) int limit,
+                                             @AuthenticationPrincipal AuthenticatedUser viewer) {
+<span class="pc bpc" id="L55" title="1 of 3 branches missed.">        boolean descending = switch (sort) {</span>
+<span class="fc" id="L56">            case &quot;startsAt&quot; -&gt; false;</span>
+<span class="fc" id="L57">            case &quot;-startsAt&quot; -&gt; true;</span>
+<span class="pc" id="L58">            default -&gt; throw new SemanticValidationException(&quot;sort&quot;, &quot;sort admite startsAt o -startsAt&quot;);</span>
+        };
+<span class="pc bpc" id="L60" title="1 of 6 branches missed.">        if ((nearLat == null) != (nearLng == null)) {</span>
+<span class="nc" id="L61">            throw new SemanticValidationException(&quot;nearLat&quot;, &quot;nearLat y nearLng deben venir en pareja&quot;);</span>
+        }
+<span class="fc" id="L63">        int boundedLimit = Math.min(Math.max(limit, 1), 100);</span>
+<span class="fc" id="L64">        CursorPage&lt;EventListItem&gt; page = searchEvents.execute(new EventSearchQuery(q, categoryId,</span>
+                dateFrom, dateTo, nearLat, nearLng, radiusKm, descending, cursor, boundedLimit,
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">                viewer == null ? null : viewer.id()));</span>
+<span class="fc" id="L67">        return PageResponse.of(page.items().stream().map(mapper::toSummary).toList(), page);</span>
+    }
+
+    @GetMapping(&quot;/events/{eventId}&quot;)
+    DataResponse&lt;EventDetailDto&gt; getEvent(@PathVariable UUID eventId,
+                                          @AuthenticationPrincipal AuthenticatedUser viewer) {
+<span class="fc" id="L73">        return DataResponse.of(mapper.toDetail(</span>
+<span class="fc bfc" id="L74" title="All 2 branches covered.">                getEventDetail.execute(eventId, viewer == null ? null : viewer.id())));</span>
+    }
+
+    @GetMapping(&quot;/categories&quot;)
+    DataResponse&lt;List&lt;CategoryDto&gt;&gt; listCategories() {
+<span class="nc" id="L79">        return DataResponse.of(listCategories.execute().stream().map(mapper::toCategoryDto).toList());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

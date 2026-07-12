@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MoneyDto.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.shared.web</a> &gt; <span class="el_source">MoneyDto.java</span></div><h1>MoneyDto.java</h1><pre class="source lang-java linenums">package com.eventflow.shared.web;
+
+import com.eventflow.shared.domain.Money;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+
+/** Espejo del schema Money: amount como string decimal de 2 posiciones + ISO-4217. */
+<span class="fc" id="L8">public record MoneyDto(</span>
+        @NotBlank @Pattern(regexp = &quot;^\\d+\\.\\d{2}$&quot;, message = &quot;amount debe ser un decimal con 2 posiciones&quot;) String amount,
+        @NotBlank @Pattern(regexp = &quot;^[A-Z]{3}$&quot;, message = &quot;currency debe ser ISO-4217&quot;) String currency) {
+
+    public static MoneyDto from(Money money) {
+<span class="fc bfc" id="L13" title="All 2 branches covered.">        return money == null ? null : new MoneyDto(money.amount().toPlainString(), money.currency());</span>
+    }
+
+    public Money toMoney() {
+<span class="fc" id="L17">        return Money.of(amount, currency);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

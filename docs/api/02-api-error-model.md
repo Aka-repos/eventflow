@@ -77,6 +77,9 @@ Todo error se responde con `Content-Type: application/problem+json` y el esquema
 ### Catálogo/eventos
 `event_not_published` 409 · `event_sold_out` 409 (payload sugiere waitlist si `waitlistEnabled`) · `sales_window_closed` 422
 
+Registro aditivo Módulo 2 (2026-07-11, per engineering/07 §2 "registradas en api/02 si son nuevas"):
+`event_not_draft` 409 (publicar/eliminar exige DRAFT) · `event_not_publishable` 422 (publicar sin tarifas) · `category_in_use` 409 (DELETE categoría con eventos) · `category_name_taken` 409 (nombre único) · `zone_in_use` 409 (DELETE zona con tarifas) · `ticket_type_has_sales` 409 (editar/eliminar tarifa con vendidos)
+
 ### Órdenes/pagos
 `order_expired` 409 · `order_not_pending` 409 · `payment_failed` 402 (con `detail` del motivo del proveedor, saneado) · `payment_in_progress` 409 · `currency_mismatch` 422
 

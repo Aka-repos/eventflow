@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.eventflow.modules.ticketing.domain.TicketTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-07-12T18:56:54.473Z" hostname="MacBook-Air-de-Andres.local" time="0.007">
+  <properties/>
+  <testcase name="qr_available_at_is_null_without_event_start_in_snapshot()" classname="com.eventflow.modules.ticketing.domain.TicketTest" time="0.001"/>
+  <testcase name="can_recover_only_when_active_and_policy_allows()" classname="com.eventflow.modules.ticketing.domain.TicketTest" time="0.0"/>
+  <testcase name="qr_available_at_derives_from_snapshot()" classname="com.eventflow.modules.ticketing.domain.TicketTest" time="0.0"/>
+  <testcase name="primary_issue_sets_owner_prices_and_snapshot()" classname="com.eventflow.modules.ticketing.domain.TicketTest" time="0.006"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

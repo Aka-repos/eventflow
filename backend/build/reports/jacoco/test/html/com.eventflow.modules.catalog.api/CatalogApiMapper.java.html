@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>CatalogApiMapper.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.catalog.api</a> &gt; <span class="el_source">CatalogApiMapper.java</span></div><h1>CatalogApiMapper.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.catalog.api;
+
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.CategoryDto;
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.EventDetailDto;
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.EventPolicyPublicDto;
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.EventPolicyResponseDto;
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.EventSummaryDto;
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.OrganizerDto;
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.SponsorDto;
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.TicketTypeDto;
+import com.eventflow.modules.catalog.api.dto.CatalogDtos.ZoneDto;
+import com.eventflow.modules.catalog.application.result.EventDetailResult;
+import com.eventflow.modules.catalog.domain.Category;
+import com.eventflow.modules.catalog.domain.Event;
+import com.eventflow.modules.catalog.domain.EventPolicy;
+import com.eventflow.modules.catalog.domain.EventZone;
+import com.eventflow.modules.catalog.domain.Sponsor;
+import com.eventflow.modules.catalog.domain.port.EventListItem;
+import com.eventflow.modules.catalog.domain.port.TariffsReadPort.TariffView;
+import com.eventflow.shared.web.MoneyDto;
+import org.springframework.stereotype.Component;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.List;
+
+@Component
+class CatalogApiMapper {
+
+    private final Clock clock;
+
+<span class="fc" id="L32">    CatalogApiMapper(Clock clock) {</span>
+<span class="fc" id="L33">        this.clock = clock;</span>
+<span class="fc" id="L34">    }</span>
+
+    EventSummaryDto toSummary(EventListItem item) {
+<span class="fc" id="L37">        return new EventSummaryDto(item.id(), item.title(), item.venueName(), item.startsAt(), item.endsAt(),</span>
+<span class="fc" id="L38">                item.timezone(), item.status().name(), item.coverUrl(),</span>
+<span class="fc" id="L39">                new CategoryDto(item.categoryId(), item.categoryName(), item.categoryIcon()),</span>
+<span class="fc" id="L40">                MoneyDto.from(item.priceFrom()), item.isFavorite());</span>
+    }
+
+    EventDetailDto toDetail(EventDetailResult result) {
+<span class="fc" id="L44">        Event event = result.event();</span>
+<span class="fc" id="L45">        Instant now = clock.instant();</span>
+<span class="fc" id="L46">        List&lt;TicketTypeDto&gt; ticketTypes = result.tariffs().stream()</span>
+<span class="fc" id="L47">                .map(t -&gt; toTicketTypeDto(t, now))</span>
+<span class="fc" id="L48">                .toList();</span>
+<span class="fc" id="L49">        MoneyDto priceFrom = result.tariffs().stream()</span>
+<span class="fc" id="L50">                .findFirst()</span>
+<span class="fc" id="L51">                .map(t -&gt; MoneyDto.from(t.price()))</span>
+<span class="fc" id="L52">                .orElse(null);</span>
+<span class="fc" id="L53">        EventPolicy policy = result.policy();</span>
+<span class="fc" id="L54">        return new EventDetailDto(event.getId(), event.getTitle(), event.getVenueName(),</span>
+<span class="fc" id="L55">                event.getStartsAt(), event.getEndsAt(), event.getTimezone(), event.getStatus().name(),</span>
+<span class="fc" id="L56">                event.getCoverUrl(), toCategoryDto(result.category()), priceFrom, result.isFavorite(),</span>
+<span class="fc" id="L57">                event.getDescription(), event.getAddress(),</span>
+<span class="fc bfc" id="L58" title="All 2 branches covered.">                event.getLatitude() == null ? null : event.getLatitude().doubleValue(),</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">                event.getLongitude() == null ? null : event.getLongitude().doubleValue(),</span>
+<span class="fc" id="L60">                new OrganizerDto(event.getOrganizerId(), result.organizerName()),</span>
+                ticketTypes,
+<span class="fc" id="L62">                result.zones().stream().map(this::toZoneDto).toList(),</span>
+<span class="fc" id="L63">                List.of(),</span>
+<span class="fc" id="L64">                result.sponsors().stream().map(this::toSponsorDto).toList(),</span>
+<span class="fc" id="L65">                toPolicyPublic(policy), result.waitlistOpen());</span>
+    }
+
+    TicketTypeDto toTicketTypeDto(TariffView tariff, Instant now) {
+<span class="fc" id="L69">        return new TicketTypeDto(tariff.id(), tariff.name(), tariff.description(),</span>
+<span class="fc" id="L70">                MoneyDto.from(tariff.price()), tariff.zoneName(), tariff.isAvailable(now), tariff.salesEndsAt());</span>
+    }
+
+    CategoryDto toCategoryDto(Category category) {
+<span class="pc bpc" id="L74" title="1 of 2 branches missed.">        return category == null ? null : new CategoryDto(category.getId(), category.getName(), category.getIcon());</span>
+    }
+
+    ZoneDto toZoneDto(EventZone zone) {
+<span class="fc" id="L78">        return new ZoneDto(zone.getId(), zone.getName(), zone.getCapacity());</span>
+    }
+
+    SponsorDto toSponsorDto(Sponsor sponsor) {
+<span class="nc" id="L82">        return new SponsorDto(sponsor.getId(), sponsor.getName(), sponsor.getLogoUrl(), sponsor.getWebsite());</span>
+    }
+
+    EventPolicyPublicDto toPolicyPublic(EventPolicy policy) {
+<span class="fc" id="L86">        return new EventPolicyPublicDto(policy.getRefundWindowEndsAt(), policy.isExchangeEnabled(),</span>
+<span class="fc" id="L87">                policy.getExchangeDepreciationPct(), policy.isWaitlistEnabled(),</span>
+<span class="fc" id="L88">                policy.getQrVisibilityHoursBefore());</span>
+    }
+
+    EventPolicyResponseDto toPolicyResponse(EventPolicy policy) {
+<span class="fc" id="L92">        return new EventPolicyResponseDto(policy.getEventId(), policy.getRefundWindowEndsAt(),</span>
+<span class="fc" id="L93">                policy.isExchangeEnabled(), policy.getExchangeDepreciationPct(),</span>
+<span class="fc" id="L94">                policy.getExchangeListingDeadline(), policy.isWaitlistEnabled(),</span>
+<span class="fc" id="L95">                policy.getWaitlistOfferMinutes(), policy.getTempReservationMinutes(),</span>
+<span class="fc" id="L96">                policy.getQrVisibilityHoursBefore(), policy.getQrExpirationMinutes(),</span>
+<span class="fc" id="L97">                policy.getCancellationPolicy(), policy.getExtraPolicies(), policy.getVersion());</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

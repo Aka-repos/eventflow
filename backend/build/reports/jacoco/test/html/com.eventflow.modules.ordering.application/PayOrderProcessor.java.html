@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>PayOrderProcessor.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.ordering.application</a> &gt; <span class="el_source">PayOrderProcessor.java</span></div><h1>PayOrderProcessor.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.ordering.application;
+
+import com.eventflow.modules.catalog.application.CatalogFacade;
+import com.eventflow.modules.ledger.application.LedgerFacade;
+import com.eventflow.modules.ordering.application.result.OrderResult;
+import com.eventflow.modules.ordering.domain.Order;
+import com.eventflow.modules.ordering.domain.OrderItem;
+import com.eventflow.modules.ordering.domain.event.OrderEvents;
+import com.eventflow.modules.ordering.domain.exception.OrderNotFoundException;
+import com.eventflow.modules.ordering.domain.port.OrderRepository;
+import com.eventflow.modules.payments.application.PaymentsFacade;
+import com.eventflow.modules.payments.application.PaymentResult;
+import com.eventflow.modules.ticketing.application.TicketingFacade;
+import com.eventflow.shared.domain.Money;
+import com.eventflow.shared.outbox.OutboxPublisher;
+import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * S2 (parte 2): bajo lock de la orden — APPROVED ⇒ PAID + emisión con snapshot + ledger + outbox;
+ * DECLINED ⇒ FAILED + liberación de inventario + outbox. El intent de pago se commitea aparte
+ * (REQUIRES_NEW en PaymentsFacade): si esta TX muere, la reconciliación encuentra el huérfano.
+ */
+@Component
+public class PayOrderProcessor {
+
+    private final OrderRepository orderRepository;
+    private final PaymentsFacade payments;
+    private final TicketingFacade ticketing;
+    private final CatalogFacade catalog;
+    private final LedgerFacade ledger;
+    private final OrderingSupport support;
+    private final OrderQueryAssembler assembler;
+    private final OutboxPublisher outbox;
+    private final Clock clock;
+
+    public PayOrderProcessor(OrderRepository orderRepository, PaymentsFacade payments,
+                             TicketingFacade ticketing, CatalogFacade catalog, LedgerFacade ledger,
+                             OrderingSupport support, OrderQueryAssembler assembler,
+<span class="fc" id="L47">                             OutboxPublisher outbox, Clock clock) {</span>
+<span class="fc" id="L48">        this.orderRepository = orderRepository;</span>
+<span class="fc" id="L49">        this.payments = payments;</span>
+<span class="fc" id="L50">        this.ticketing = ticketing;</span>
+<span class="fc" id="L51">        this.catalog = catalog;</span>
+<span class="fc" id="L52">        this.ledger = ledger;</span>
+<span class="fc" id="L53">        this.support = support;</span>
+<span class="fc" id="L54">        this.assembler = assembler;</span>
+<span class="fc" id="L55">        this.outbox = outbox;</span>
+<span class="fc" id="L56">        this.clock = clock;</span>
+<span class="fc" id="L57">    }</span>
+
+    @Transactional
+    public OrderResult process(UUID buyerId, UUID orderId, String method) {
+<span class="fc" id="L61">        Instant now = clock.instant();</span>
+<span class="fc" id="L62">        Order order = orderRepository.findByIdForUpdate(orderId)</span>
+<span class="fc" id="L63">                .filter(o -&gt; o.isOwnedBy(buyerId))</span>
+<span class="fc" id="L64">                .orElseThrow(OrderNotFoundException::new);</span>
+        // la expiración vencida ya la materializó OrderExpirer (TX propia); esto solo cubre la carrera
+<span class="fc" id="L66">        order.ensurePayable(now);</span>
+
+<span class="fc" id="L68">        PaymentResult payment = payments.charge(orderId, order.getTotal(), method);</span>
+
+<span class="fc bfc" id="L70" title="All 2 branches covered.">        if (payment.approved()) {</span>
+<span class="fc" id="L71">            order.markPaid();</span>
+<span class="fc" id="L72">            Map&lt;UUID, List&lt;UUID&gt;&gt; ticketsByItem = issueTickets(order, buyerId, now);</span>
+<span class="fc" id="L73">            recordLedger(order, buyerId);</span>
+<span class="fc" id="L74">            outbox.publish(&quot;Order&quot;, order.getId(), OrderEvents.PAYMENT_CONFIRMED, OrderEvents.VERSION,</span>
+<span class="fc" id="L75">                    buyerId, Map.of(</span>
+<span class="fc" id="L76">                            &quot;orderId&quot;, order.getId().toString(),</span>
+<span class="fc" id="L77">                            &quot;paymentId&quot;, payment.id().toString(),</span>
+<span class="fc" id="L78">                            &quot;provider&quot;, payment.provider(),</span>
+<span class="fc" id="L79">                            &quot;amount&quot;, payment.amount().amount().toPlainString()));</span>
+<span class="fc" id="L80">            orderRepository.save(order);</span>
+<span class="fc" id="L81">            return new OrderResult(order, descriptions(order), ticketsByItem, payment);</span>
+        }
+
+<span class="fc" id="L84">        order.markFailed();</span>
+<span class="fc" id="L85">        support.releaseInventory(order);</span>
+<span class="fc" id="L86">        outbox.publish(&quot;Order&quot;, order.getId(), OrderEvents.PAYMENT_FAILED, OrderEvents.VERSION,</span>
+<span class="fc" id="L87">                buyerId, Map.of(</span>
+<span class="fc" id="L88">                        &quot;orderId&quot;, order.getId().toString(),</span>
+<span class="fc" id="L89">                        &quot;paymentId&quot;, payment.id().toString(),</span>
+<span class="pc bpc" id="L90" title="1 of 2 branches missed.">                        &quot;reason&quot;, payment.failureReason() == null ? &quot;&quot; : payment.failureReason()));</span>
+<span class="fc" id="L91">        orderRepository.save(order);</span>
+<span class="fc" id="L92">        return new OrderResult(order, descriptions(order), Map.of(), payment);</span>
+    }
+
+    private Map&lt;UUID, List&lt;UUID&gt;&gt; issueTickets(Order order, UUID buyerId, Instant now) {
+<span class="fc" id="L96">        Map&lt;UUID, List&lt;UUID&gt;&gt; ticketsByItem = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L97">        Map&lt;UUID, CatalogFacade.EventPurchaseSnapshot&gt; snapshots = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        for (OrderItem item : order.getItems()) {</span>
+<span class="pc bpc" id="L99" title="1 of 2 branches missed.">            if (!&quot;TICKET&quot;.equals(item.getItemType())) {</span>
+<span class="nc" id="L100">                continue;</span>
+            }
+<span class="fc" id="L102">            UUID eventId = eventIdOf(item, snapshots);</span>
+<span class="fc" id="L103">            CatalogFacade.EventPurchaseSnapshot snapshot = snapshots.get(eventId);</span>
+<span class="fc" id="L104">            List&lt;UUID&gt; ids = ticketing.issuePrimaryTickets(new TicketingFacade.IssueTicketsCommand(</span>
+<span class="fc" id="L105">                    item.getId(), item.getTicketTypeId(), eventId, buyerId, item.getQuantity(),</span>
+<span class="fc" id="L106">                    item.getUnitPrice(), snapshot.policySnapshot(), now));</span>
+<span class="fc" id="L107">            ticketsByItem.put(item.getId(), ids);</span>
+<span class="fc" id="L108">        }</span>
+<span class="fc" id="L109">        return ticketsByItem;</span>
+    }
+
+    private void recordLedger(Order order, UUID buyerId) {
+<span class="fc" id="L113">        Map&lt;UUID, CatalogFacade.EventPurchaseSnapshot&gt; snapshots = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L114">        Map&lt;UUID, Money&gt; totalsByEvent = new HashMap&lt;&gt;();</span>
+<span class="fc bfc" id="L115" title="All 2 branches covered.">        for (OrderItem item : order.getItems()) {</span>
+<span class="pc bpc" id="L116" title="1 of 2 branches missed.">            if (!&quot;TICKET&quot;.equals(item.getItemType())) {</span>
+<span class="nc" id="L117">                continue;</span>
+            }
+<span class="fc" id="L119">            UUID eventId = eventIdOf(item, snapshots);</span>
+<span class="fc" id="L120">            totalsByEvent.merge(eventId, item.lineTotal(), Money::add);</span>
+<span class="fc" id="L121">        }</span>
+<span class="fc" id="L122">        totalsByEvent.forEach((eventId, amount) -&gt; ledger.recordPrimarySale(buyerId,</span>
+<span class="fc" id="L123">                snapshots.get(eventId).organizerId(), amount, order.getId(), eventId,</span>
+<span class="fc" id="L124">                Map.of(&quot;orderId&quot;, order.getId().toString())));</span>
+<span class="fc" id="L125">    }</span>
+
+    private UUID eventIdOf(OrderItem item, Map&lt;UUID, CatalogFacade.EventPurchaseSnapshot&gt; snapshots) {
+        // el eventId del ítem se resuelve por la tarifa → snapshot cacheado por evento
+<span class="fc" id="L129">        TicketingFacade.TariffSnapshot tariff = ticketing.tariffSnapshot(item.getTicketTypeId());</span>
+<span class="fc" id="L130">        snapshots.computeIfAbsent(tariff.eventId(), catalog::purchaseSnapshot);</span>
+<span class="fc" id="L131">        return tariff.eventId();</span>
+    }
+
+    private Map&lt;UUID, String&gt; descriptions(Order order) {
+<span class="fc" id="L135">        return assembler.descriptions(order);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TariffsReadJdbcAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.catalog.infrastructure.persistence</a> &gt; <span class="el_source">TariffsReadJdbcAdapter.java</span></div><h1>TariffsReadJdbcAdapter.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.catalog.infrastructure.persistence;
+
+import com.eventflow.modules.catalog.domain.port.TariffsReadPort;
+import com.eventflow.shared.domain.Money;
+import jakarta.persistence.EntityManager;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * Proyección de SOLO LECTURA sobre ticketing.ticket_types. La matriz doc 10 prohíbe
+ * catalog→ticketing por fachada; esta consulta SQL no importa código del módulo ticketing
+ * y catalog jamás escribe estas tablas (justificación en el README del módulo).
+ */
+@Component
+class TariffsReadJdbcAdapter implements TariffsReadPort {
+
+    private final EntityManager entityManager;
+
+<span class="fc" id="L25">    TariffsReadJdbcAdapter(EntityManager entityManager) {</span>
+<span class="fc" id="L26">        this.entityManager = entityManager;</span>
+<span class="fc" id="L27">    }</span>
+
+    @Override
+    public boolean eventHasTariffs(UUID eventId) {
+<span class="fc" id="L31">        return !entityManager.createNativeQuery(</span>
+                        &quot;SELECT 1 FROM ticketing.ticket_types WHERE event_id = :eventId LIMIT 1&quot;)
+<span class="fc" id="L33">                .setParameter(&quot;eventId&quot;, eventId)</span>
+<span class="fc bfc" id="L34" title="All 2 branches covered.">                .getResultList().isEmpty();</span>
+    }
+
+    @Override
+    public boolean zoneHasTariffs(UUID zoneId) {
+<span class="fc" id="L39">        return !entityManager.createNativeQuery(</span>
+                        &quot;SELECT 1 FROM ticketing.ticket_types WHERE zone_id = :zoneId LIMIT 1&quot;)
+<span class="fc" id="L41">                .setParameter(&quot;zoneId&quot;, zoneId)</span>
+<span class="fc bfc" id="L42" title="All 2 branches covered.">                .getResultList().isEmpty();</span>
+    }
+
+    @Override
+    public List&lt;TariffView&gt; findByEventId(UUID eventId) {
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L48">        List&lt;Object[]&gt; raw = entityManager.createNativeQuery(&quot;&quot;&quot;</span>
+                        SELECT tt.id, tt.name, tt.description, tt.price, tt.currency, z.name AS zone_name,
+                               tt.total_quantity, tt.sold_quantity, tt.sales_starts_at, tt.sales_ends_at
+                        FROM ticketing.ticket_types tt
+                        LEFT JOIN catalog.event_zones z ON z.id = tt.zone_id
+                        WHERE tt.event_id = :eventId
+                        ORDER BY tt.price ASC, tt.name ASC
+                        &quot;&quot;&quot;)
+<span class="fc" id="L56">                .setParameter(&quot;eventId&quot;, eventId)</span>
+<span class="fc" id="L57">                .getResultList();</span>
+<span class="fc" id="L58">        List&lt;TariffView&gt; views = new ArrayList&lt;&gt;(raw.size());</span>
+<span class="fc bfc" id="L59" title="All 2 branches covered.">        for (Object[] r : raw) {</span>
+<span class="fc" id="L60">            views.add(new TariffView((UUID) r[0], (String) r[1], (String) r[2],</span>
+<span class="fc" id="L61">                    new Money((BigDecimal) r[3], ((String) r[4]).trim()), (String) r[5],</span>
+<span class="fc" id="L62">                    ((Number) r[6]).intValue(), ((Number) r[7]).intValue(),</span>
+<span class="fc" id="L63">                    toInstant(r[8]), toInstant(r[9])));</span>
+<span class="fc" id="L64">        }</span>
+<span class="fc" id="L65">        return views;</span>
+    }
+
+    private static Instant toInstant(Object column) {
+<span class="pc bpc" id="L69" title="1 of 2 branches missed.">        if (column == null) {</span>
+<span class="fc" id="L70">            return null;</span>
+        }
+<span class="nc bnc" id="L72" title="All 2 branches missed.">        if (column instanceof OffsetDateTime odt) {</span>
+<span class="nc" id="L73">            return odt.toInstant();</span>
+        }
+<span class="nc" id="L75">        return (Instant) column;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

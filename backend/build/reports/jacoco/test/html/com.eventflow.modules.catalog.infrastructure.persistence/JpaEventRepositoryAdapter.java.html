@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JpaEventRepositoryAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.catalog.infrastructure.persistence</a> &gt; <span class="el_source">JpaEventRepositoryAdapter.java</span></div><h1>JpaEventRepositoryAdapter.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.catalog.infrastructure.persistence;
+
+import com.eventflow.modules.catalog.domain.Event;
+import com.eventflow.modules.catalog.domain.EventStatus;
+import com.eventflow.modules.catalog.domain.port.EventRepository;
+import com.eventflow.shared.web.CursorPage;
+import com.eventflow.shared.web.Cursors;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
+import org.springframework.stereotype.Component;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+@Component
+class JpaEventRepositoryAdapter implements EventRepository {
+
+    private final SpringDataEventRepository jpa;
+    private final EntityManager entityManager;
+
+<span class="fc" id="L23">    JpaEventRepositoryAdapter(SpringDataEventRepository jpa, EntityManager entityManager) {</span>
+<span class="fc" id="L24">        this.jpa = jpa;</span>
+<span class="fc" id="L25">        this.entityManager = entityManager;</span>
+<span class="fc" id="L26">    }</span>
+
+    @Override
+    public Event save(Event event) {
+<span class="fc" id="L30">        return jpa.saveAndFlush(event);</span>
+    }
+
+    @Override
+    public Optional&lt;Event&gt; findById(UUID id) {
+<span class="fc" id="L35">        return jpa.findById(id);</span>
+    }
+
+    @Override
+    public boolean existsById(UUID id) {
+<span class="fc" id="L40">        return jpa.existsById(id);</span>
+    }
+
+    @Override
+    public boolean existsByCategoryId(short categoryId) {
+<span class="fc" id="L45">        return jpa.existsByCategoryId(categoryId);</span>
+    }
+
+    /** Keyset (starts_at, id) ascendente — api/07. */
+    @Override
+    public CursorPage&lt;Event&gt; findByOrganizer(UUID organizerId, EventStatus status, String cursor, int limit) {
+<span class="fc" id="L51">        StringBuilder jpql = new StringBuilder(&quot;SELECT e FROM Event e WHERE e.organizerId = :organizerId&quot;);</span>
+<span class="pc bpc" id="L52" title="1 of 2 branches missed.">        if (status != null) {</span>
+<span class="nc" id="L53">            jpql.append(&quot; AND e.status = :status&quot;);</span>
+        }
+<span class="pc bpc" id="L55" title="1 of 2 branches missed.">        Cursors.Key key = cursor == null ? null : Cursors.decode(cursor, false);</span>
+<span class="pc bpc" id="L56" title="1 of 2 branches missed.">        if (key != null) {</span>
+<span class="nc" id="L57">            jpql.append(&quot; AND (e.startsAt &gt; :curStarts OR (e.startsAt = :curStarts AND e.id &gt; :curId))&quot;);</span>
+        }
+<span class="fc" id="L59">        jpql.append(&quot; ORDER BY e.startsAt ASC, e.id ASC&quot;);</span>
+<span class="fc" id="L60">        TypedQuery&lt;Event&gt; query = entityManager.createQuery(jpql.toString(), Event.class)</span>
+<span class="fc" id="L61">                .setParameter(&quot;organizerId&quot;, organizerId)</span>
+<span class="fc" id="L62">                .setMaxResults(limit + 1);</span>
+<span class="pc bpc" id="L63" title="1 of 2 branches missed.">        if (status != null) {</span>
+<span class="nc" id="L64">            query.setParameter(&quot;status&quot;, status);</span>
+        }
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        if (key != null) {</span>
+<span class="nc" id="L67">            query.setParameter(&quot;curStarts&quot;, Instant.ofEpochMilli(key.sortMillis()));</span>
+<span class="nc" id="L68">            query.setParameter(&quot;curId&quot;, key.id());</span>
+        }
+<span class="fc" id="L70">        List&lt;Event&gt; rows = query.getResultList();</span>
+<span class="fc" id="L71">        String nextCursor = null;</span>
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">        if (rows.size() &gt; limit) {</span>
+<span class="fc" id="L73">            rows = rows.subList(0, limit);</span>
+<span class="fc" id="L74">            Event last = rows.get(rows.size() - 1);</span>
+<span class="fc" id="L75">            nextCursor = Cursors.encode(last.getStartsAt().toEpochMilli(), last.getId(), false);</span>
+        }
+<span class="fc" id="L77">        return new CursorPage&lt;&gt;(List.copyOf(rows), nextCursor);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

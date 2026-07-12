@@ -23,28 +23,48 @@ import org.springframework.http.HttpStatus;
 <span class="fc" id="L23">    INVALID_CREDENTIALS(&quot;invalid_credentials&quot;, HttpStatus.UNAUTHORIZED, &quot;Invalid credentials&quot;),</span>
 <span class="fc" id="L24">    FORBIDDEN(&quot;forbidden&quot;, HttpStatus.FORBIDDEN, &quot;Forbidden&quot;),</span>
 <span class="fc" id="L25">    ACCOUNT_BLOCKED(&quot;account_blocked&quot;, HttpStatus.FORBIDDEN, &quot;Account blocked&quot;),</span>
-<span class="fc" id="L26">    EMAIL_ALREADY_REGISTERED(&quot;email_already_registered&quot;, HttpStatus.CONFLICT, &quot;Email already registered&quot;);</span>
+<span class="fc" id="L26">    EMAIL_ALREADY_REGISTERED(&quot;email_already_registered&quot;, HttpStatus.CONFLICT, &quot;Email already registered&quot;),</span>
+
+    // Catálogo/eventos (los nuevos están registrados aditivamente en docs/api/02 §3)
+<span class="fc" id="L29">    EVENT_NOT_PUBLISHED(&quot;event_not_published&quot;, HttpStatus.CONFLICT, &quot;Event not published&quot;),</span>
+<span class="fc" id="L30">    EVENT_NOT_DRAFT(&quot;event_not_draft&quot;, HttpStatus.CONFLICT, &quot;Event not in draft&quot;),</span>
+<span class="fc" id="L31">    EVENT_NOT_PUBLISHABLE(&quot;event_not_publishable&quot;, HttpStatus.UNPROCESSABLE_ENTITY, &quot;Event not publishable&quot;),</span>
+<span class="fc" id="L32">    CATEGORY_IN_USE(&quot;category_in_use&quot;, HttpStatus.CONFLICT, &quot;Category in use&quot;),</span>
+<span class="fc" id="L33">    CATEGORY_NAME_TAKEN(&quot;category_name_taken&quot;, HttpStatus.CONFLICT, &quot;Category name already exists&quot;),</span>
+<span class="fc" id="L34">    ZONE_IN_USE(&quot;zone_in_use&quot;, HttpStatus.CONFLICT, &quot;Zone has tariffs&quot;),</span>
+<span class="fc" id="L35">    TICKET_TYPE_HAS_SALES(&quot;ticket_type_has_sales&quot;, HttpStatus.CONFLICT, &quot;Ticket type has sales&quot;),</span>
+<span class="fc" id="L36">    EVENT_SOLD_OUT(&quot;event_sold_out&quot;, HttpStatus.CONFLICT, &quot;Event sold out&quot;),</span>
+<span class="fc" id="L37">    SALES_WINDOW_CLOSED(&quot;sales_window_closed&quot;, HttpStatus.UNPROCESSABLE_ENTITY, &quot;Sales window closed&quot;),</span>
+
+    // Órdenes/pagos (api/02 §3, catálogo congelado)
+<span class="fc" id="L40">    ORDER_EXPIRED(&quot;order_expired&quot;, HttpStatus.CONFLICT, &quot;Order expired&quot;),</span>
+<span class="fc" id="L41">    ORDER_NOT_PENDING(&quot;order_not_pending&quot;, HttpStatus.CONFLICT, &quot;Order not pending&quot;),</span>
+<span class="fc" id="L42">    PAYMENT_FAILED(&quot;payment_failed&quot;, HttpStatus.PAYMENT_REQUIRED, &quot;Payment failed&quot;),</span>
+<span class="fc" id="L43">    PAYMENT_IN_PROGRESS(&quot;payment_in_progress&quot;, HttpStatus.CONFLICT, &quot;Payment in progress&quot;),</span>
+<span class="fc" id="L44">    CURRENCY_MISMATCH(&quot;currency_mismatch&quot;, HttpStatus.UNPROCESSABLE_ENTITY, &quot;Currency mismatch&quot;),</span>
+<span class="fc" id="L45">    IDEMPOTENCY_KEY_REQUIRED(&quot;idempotency_key_required&quot;, HttpStatus.UNPROCESSABLE_ENTITY, &quot;Idempotency key required&quot;),</span>
+<span class="fc" id="L46">    IDEMPOTENCY_KEY_REUSE(&quot;idempotency_key_reuse&quot;, HttpStatus.UNPROCESSABLE_ENTITY, &quot;Idempotency key reuse&quot;);</span>
 
     private final String code;
     private final HttpStatus status;
     private final String title;
 
-<span class="fc" id="L32">    ErrorCode(String code, HttpStatus status, String title) {</span>
-<span class="fc" id="L33">        this.code = code;</span>
-<span class="fc" id="L34">        this.status = status;</span>
-<span class="fc" id="L35">        this.title = title;</span>
-<span class="fc" id="L36">    }</span>
+<span class="fc" id="L52">    ErrorCode(String code, HttpStatus status, String title) {</span>
+<span class="fc" id="L53">        this.code = code;</span>
+<span class="fc" id="L54">        this.status = status;</span>
+<span class="fc" id="L55">        this.title = title;</span>
+<span class="fc" id="L56">    }</span>
 
     public String code() {
-<span class="fc" id="L39">        return code;</span>
+<span class="fc" id="L59">        return code;</span>
     }
 
     public HttpStatus status() {
-<span class="fc" id="L43">        return status;</span>
+<span class="fc" id="L63">        return status;</span>
     }
 
     public String title() {
-<span class="fc" id="L47">        return title;</span>
+<span class="fc" id="L67">        return title;</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

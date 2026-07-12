@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.eventflow.recovery.PaymentRecoveryIT" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-07-12T18:56:55.836Z" hostname="MacBook-Air-de-Andres.local" time="0.114">
+  <properties/>
+  <testcase name="t1_crash_between_intent_and_authorization_reconciles_to_declined()" classname="com.eventflow.recovery.PaymentRecoveryIT" time="0.031"/>
+  <testcase name="t2_crash_after_authorization_reconciles_to_paid_with_tickets_and_ledger()" classname="com.eventflow.recovery.PaymentRecoveryIT" time="0.048"/>
+  <testcase name="t3_retry_after_recovery_is_idempotent_and_never_double_charges()" classname="com.eventflow.recovery.PaymentRecoveryIT" time="0.006"/>
+  <testcase name="t4_reconciliation_is_idempotent()" classname="com.eventflow.recovery.PaymentRecoveryIT" time="0.003"/>
+  <testcase name="t5_concurrent_pay_with_triphasic_flow_settles_exactly_once()" classname="com.eventflow.recovery.PaymentRecoveryIT" time="0.025"/>
+  <system-out><![CDATA[2026-07-12T13:56:54.484-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Creating container for image: postgres:17
+2026-07-12T13:56:54.521-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Container postgres:17 is starting: 9a1f5912ecc09940aee9b9e9b0f61a0ee2747e69e71490f3a144501de94dd738
+2026-07-12T13:56:55.144-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Container postgres:17 started in PT0.660096S
+2026-07-12T13:56:55.144-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Container is started (JDBC URL: jdbc:postgresql://localhost:50098/test?loggerLevel=OFF)
+2026-07-12T13:56:55.145-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.eventflow.recovery.PaymentRecoveryIT]: PaymentRecoveryIT does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-07-12T13:56:55.151-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.eventflow.EventFlowApplication for test class com.eventflow.recovery.PaymentRecoveryIT
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.5.6)
+
+2026-07-12T13:56:55.158-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] c.eventflow.recovery.PaymentRecoveryIT   : Starting PaymentRecoveryIT using Java 17.0.19 with PID 55204 (started by andresvega in /Users/andresvega/IdeaProjects/EventFlow/backend)
+2026-07-12T13:56:55.158-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] c.eventflow.recovery.PaymentRecoveryIT   : No active profile set, falling back to 1 default profile: "default"
+2026-07-12T13:56:55.239-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-07-12T13:56:55.251-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 11 ms. Found 12 JPA repository interfaces.
+2026-07-12T13:56:55.317-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:50098/test?loggerLevel=OFF (PostgreSQL 17.10)
+2026-07-12T13:56:55.321-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table "public"."flyway_schema_history" does not exist yet
+2026-07-12T13:56:55.321-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbValidate     : Successfully validated 9 migrations (execution time 00:00.002s)
+2026-07-12T13:56:55.324-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table "public"."flyway_schema_history" ...
+2026-07-12T13:56:55.334-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Current version of schema "public": << Empty Schema >>
+2026-07-12T13:56:55.337-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "1 - schemas and extensions"
+2026-07-12T13:56:55.346-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "2 - identity"
+2026-07-12T13:56:55.355-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "3 - catalog"
+2026-07-12T13:56:55.365-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "4 - ticketing"
+2026-07-12T13:56:55.377-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "5 - commerce"
+2026-07-12T13:56:55.397-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "6 - parking"
+2026-07-12T13:56:55.405-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "7 - ops"
+2026-07-12T13:56:55.416-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "8 - privileges and rls"
+2026-07-12T13:56:55.424-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema "public" to version "9 - seed"
+2026-07-12T13:56:55.427-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Successfully applied 9 migrations to schema "public", now at version v9 (execution time 00:00.061s)
+2026-07-12T13:56:55.437-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-07-12T13:56:55.437-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-07-12T13:56:55.440-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-07-12T13:56:55.440-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Starting...
+2026-07-12T13:56:55.447-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-6 - Added connection org.postgresql.jdbc.PgConnection@5d980243
+2026-07-12T13:56:55.447-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-6 - Start completed.
+2026-07-12T13:56:55.449-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-6)']
+	Database driver: undefined/unknown
+	Database version: 17.10
+	Autocommit mode: undefined/unknown
+	Isolation level: undefined/unknown
+	Minimum pool size: undefined/unknown
+	Maximum pool size: undefined/unknown
+2026-07-12T13:56:55.480-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-07-12T13:56:55.480-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-07-12T13:56:55.605-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-07-12T13:56:55.611-05:00  WARN [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 7152696b-32f4-4691-945d-8d9795d543eb
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2026-07-12T13:56:55.611-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-07-12T13:56:55.663-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] c.eventflow.recovery.PaymentRecoveryIT   : Started PaymentRecoveryIT in 0.511 seconds (process running for 20.278)
+2026-07-12T13:56:55.866-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] c.e.m.o.application.ExpireOrdersUseCase  : order_expired orderId=019f57b0-8c22-7a8d-92f6-45c73b79870a
+2026-07-12T13:56:55.913-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] c.e.m.o.a.CompleteApprovedOrdersUseCase  : order_reconciled_paid orderId=019f57b0-8c3f-7759-8e38-f99073b7b1f0 paymentId=019f57b0-8c45-7ca6-8f03-9bbb37abbc8b
+]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventSearchJdbcAdapter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.catalog.infrastructure.persistence</a> &gt; <span class="el_source">EventSearchJdbcAdapter.java</span></div><h1>EventSearchJdbcAdapter.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.catalog.infrastructure.persistence;
+
+import com.eventflow.modules.catalog.domain.EventStatus;
+import com.eventflow.modules.catalog.domain.port.EventListItem;
+import com.eventflow.modules.catalog.domain.port.EventSearchPort;
+import com.eventflow.modules.catalog.domain.port.EventSearchQuery;
+import com.eventflow.shared.domain.Money;
+import com.eventflow.shared.web.CursorPage;
+import com.eventflow.shared.web.Cursors;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.Query;
+import org.springframework.stereotype.Component;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+/**
+ * Consulta pública del catálogo (GET /events): full-text sobre search_vector (índice GIN),
+ * filtro geográfico haversine, keyset (starts_at, id) según api/07 y datos calculados
+ * (priceFrom = tarifa mínima; isFavorite solo con viewer autenticado).
+ */
+@Component
+class EventSearchJdbcAdapter implements EventSearchPort {
+
+    private static final String BASE_SELECT = &quot;&quot;&quot;
+            SELECT e.id, e.title, e.venue_name, e.starts_at, e.ends_at, e.timezone, e.status, e.cover_url,
+                   c.id AS cat_id, c.name AS cat_name, c.icon AS cat_icon,
+                   pf.amount AS price_from_amount, pf.currency AS price_from_currency,
+                   %s AS is_favorite
+            FROM catalog.events e
+            JOIN catalog.categories c ON c.id = e.category_id
+            LEFT JOIN LATERAL (
+                SELECT tt.price AS amount, tt.currency
+                FROM ticketing.ticket_types tt
+                WHERE tt.event_id = e.id
+                ORDER BY tt.price ASC
+                LIMIT 1
+            ) pf ON true
+            &quot;&quot;&quot;;
+
+    private final EntityManager entityManager;
+
+<span class="fc" id="L49">    EventSearchJdbcAdapter(EntityManager entityManager) {</span>
+<span class="fc" id="L50">        this.entityManager = entityManager;</span>
+<span class="fc" id="L51">    }</span>
+
+    @Override
+    public CursorPage&lt;EventListItem&gt; search(EventSearchQuery q) {
+<span class="fc" id="L55">        Map&lt;String, Object&gt; params = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L56">        StringBuilder sql = new StringBuilder(BASE_SELECT.formatted(favoriteExpression(q.viewerId(), params)));</span>
+<span class="fc" id="L57">        sql.append(&quot; WHERE e.deleted_at IS NULL AND e.status IN ('PUBLISHED','SOLD_OUT','IN_PROGRESS')&quot;);</span>
+<span class="pc bpc" id="L58" title="1 of 4 branches missed.">        if (q.q() != null &amp;&amp; !q.q().isBlank()) {</span>
+<span class="fc" id="L59">            sql.append(&quot; AND e.search_vector @@ plainto_tsquery('spanish', :query)&quot;);</span>
+<span class="fc" id="L60">            params.put(&quot;query&quot;, q.q());</span>
+        }
+<span class="fc bfc" id="L62" title="All 2 branches covered.">        if (q.categoryId() != null) {</span>
+<span class="fc" id="L63">            sql.append(&quot; AND e.category_id = :categoryId&quot;);</span>
+<span class="fc" id="L64">            params.put(&quot;categoryId&quot;, q.categoryId().shortValue());</span>
+        }
+<span class="pc bpc" id="L66" title="1 of 2 branches missed.">        if (q.dateFrom() != null) {</span>
+<span class="nc" id="L67">            sql.append(&quot; AND e.starts_at &gt;= :dateFrom&quot;);</span>
+<span class="nc" id="L68">            params.put(&quot;dateFrom&quot;, q.dateFrom());</span>
+        }
+<span class="pc bpc" id="L70" title="1 of 2 branches missed.">        if (q.dateTo() != null) {</span>
+<span class="nc" id="L71">            sql.append(&quot; AND e.starts_at &lt;= :dateTo&quot;);</span>
+<span class="nc" id="L72">            params.put(&quot;dateTo&quot;, q.dateTo());</span>
+        }
+<span class="pc bpc" id="L74" title="1 of 4 branches missed.">        if (q.nearLat() != null &amp;&amp; q.nearLng() != null) {</span>
+<span class="fc" id="L75">            sql.append(&quot; AND e.latitude IS NOT NULL AND 6371 * acos(least(1.0, greatest(-1.0,&quot;)</span>
+<span class="fc" id="L76">                    .append(&quot; cos(radians(:nearLat)) * cos(radians(e.latitude)) *&quot;)</span>
+<span class="fc" id="L77">                    .append(&quot; cos(radians(e.longitude) - radians(:nearLng)) +&quot;)</span>
+<span class="fc" id="L78">                    .append(&quot; sin(radians(:nearLat)) * sin(radians(e.latitude))))) &lt;= :radiusKm&quot;);</span>
+<span class="fc" id="L79">            params.put(&quot;nearLat&quot;, q.nearLat());</span>
+<span class="fc" id="L80">            params.put(&quot;nearLng&quot;, q.nearLng());</span>
+<span class="fc" id="L81">            params.put(&quot;radiusKm&quot;, q.radiusKm());</span>
+        }
+<span class="fc" id="L83">        boolean desc = q.descending();</span>
+<span class="fc bfc" id="L84" title="All 2 branches covered.">        if (q.cursor() != null) {</span>
+<span class="fc" id="L85">            Cursors.Key key = Cursors.decode(q.cursor(), desc);</span>
+<span class="pc bpc" id="L86" title="1 of 2 branches missed.">            sql.append(desc</span>
+<span class="nc" id="L87">                    ? &quot; AND (e.starts_at &lt; :curStarts OR (e.starts_at = :curStarts AND e.id &lt; :curId))&quot;</span>
+<span class="fc" id="L88">                    : &quot; AND (e.starts_at &gt; :curStarts OR (e.starts_at = :curStarts AND e.id &gt; :curId))&quot;);</span>
+<span class="fc" id="L89">            params.put(&quot;curStarts&quot;, Instant.ofEpochMilli(key.sortMillis()));</span>
+<span class="fc" id="L90">            params.put(&quot;curId&quot;, key.id());</span>
+        }
+<span class="pc bpc" id="L92" title="1 of 2 branches missed.">        sql.append(desc ? &quot; ORDER BY e.starts_at DESC, e.id DESC&quot; : &quot; ORDER BY e.starts_at ASC, e.id ASC&quot;);</span>
+<span class="fc" id="L93">        sql.append(&quot; LIMIT :limitPlusOne&quot;);</span>
+<span class="fc" id="L94">        params.put(&quot;limitPlusOne&quot;, q.limit() + 1);</span>
+
+<span class="fc" id="L96">        List&lt;EventListItem&gt; rows = executeAndMap(sql.toString(), params);</span>
+<span class="fc" id="L97">        String nextCursor = null;</span>
+<span class="fc bfc" id="L98" title="All 2 branches covered.">        if (rows.size() &gt; q.limit()) {</span>
+<span class="fc" id="L99">            rows = rows.subList(0, q.limit());</span>
+<span class="fc" id="L100">            EventListItem last = rows.get(rows.size() - 1);</span>
+<span class="fc" id="L101">            nextCursor = Cursors.encode(last.startsAt().toEpochMilli(), last.id(), desc);</span>
+        }
+<span class="fc" id="L103">        return new CursorPage&lt;&gt;(List.copyOf(rows), nextCursor);</span>
+    }
+
+    @Override
+    public List&lt;EventListItem&gt; favoritesOf(UUID userId) {
+<span class="fc" id="L108">        Map&lt;String, Object&gt; params = new HashMap&lt;&gt;();</span>
+<span class="fc" id="L109">        String sql = BASE_SELECT.formatted(&quot;true&quot;)</span>
+                + &quot; JOIN ops.favorites f ON f.event_id = e.id AND f.user_id = :userId&quot;
+                + &quot; WHERE e.deleted_at IS NULL AND e.status &lt;&gt; 'DRAFT'&quot;
+                + &quot; ORDER BY f.created_at DESC&quot;;
+<span class="fc" id="L113">        params.put(&quot;userId&quot;, userId);</span>
+<span class="fc" id="L114">        return executeAndMap(sql, params);</span>
+    }
+
+    private String favoriteExpression(UUID viewerId, Map&lt;String, Object&gt; params) {
+<span class="pc bpc" id="L118" title="1 of 2 branches missed.">        if (viewerId == null) {</span>
+<span class="fc" id="L119">            return &quot;CAST(NULL AS boolean)&quot;;</span>
+        }
+<span class="nc" id="L121">        params.put(&quot;viewerId&quot;, viewerId);</span>
+<span class="nc" id="L122">        return &quot;EXISTS (SELECT 1 FROM ops.favorites f WHERE f.user_id = :viewerId AND f.event_id = e.id)&quot;;</span>
+    }
+
+    private List&lt;EventListItem&gt; executeAndMap(String sql, Map&lt;String, Object&gt; params) {
+<span class="fc" id="L126">        Query query = entityManager.createNativeQuery(sql);</span>
+<span class="fc" id="L127">        params.forEach(query::setParameter);</span>
+        @SuppressWarnings(&quot;unchecked&quot;)
+<span class="fc" id="L129">        List&lt;Object[]&gt; raw = query.getResultList();</span>
+<span class="fc" id="L130">        List&lt;EventListItem&gt; items = new ArrayList&lt;&gt;(raw.size());</span>
+<span class="fc bfc" id="L131" title="All 2 branches covered.">        for (Object[] r : raw) {</span>
+<span class="fc" id="L132">            BigDecimal amount = (BigDecimal) r[11];</span>
+<span class="fc bfc" id="L133" title="All 2 branches covered.">            String currency = r[12] == null ? null : ((String) r[12]).trim();</span>
+<span class="fc bfc" id="L134" title="All 2 branches covered.">            Money priceFrom = amount == null ? null : new Money(amount, currency);</span>
+<span class="fc" id="L135">            items.add(new EventListItem(</span>
+                    (UUID) r[0], (String) r[1], (String) r[2],
+<span class="fc" id="L137">                    toInstant(r[3]), toInstant(r[4]), (String) r[5],</span>
+<span class="fc" id="L138">                    EventStatus.valueOf((String) r[6]), (String) r[7],</span>
+<span class="fc" id="L139">                    ((Number) r[8]).shortValue(), (String) r[9], (String) r[10],</span>
+                    priceFrom, (Boolean) r[13]));
+<span class="fc" id="L141">        }</span>
+<span class="fc" id="L142">        return items;</span>
+    }
+
+    private static Instant toInstant(Object column) {
+<span class="pc bpc" id="L146" title="1 of 2 branches missed.">        if (column instanceof OffsetDateTime odt) {</span>
+<span class="nc" id="L147">            return odt.toInstant();</span>
+        }
+<span class="fc" id="L149">        return (Instant) column;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

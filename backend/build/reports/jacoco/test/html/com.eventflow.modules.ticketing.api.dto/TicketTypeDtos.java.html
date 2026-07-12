@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>TicketTypeDtos.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.ticketing.api.dto</a> &gt; <span class="el_source">TicketTypeDtos.java</span></div><h1>TicketTypeDtos.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.ticketing.api.dto;
+
+import com.eventflow.shared.web.MoneyDto;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
+
+import java.time.Instant;
+import java.util.UUID;
+
+/** DTOs espejo de los schemas TicketTypeDto/CreateTicketTypeRequest (OpenAPI congelado). */
+public final class TicketTypeDtos {
+
+    private TicketTypeDtos() {
+    }
+
+<span class="fc" id="L19">    public record TicketTypeDto(UUID id, String name, String description, MoneyDto price,</span>
+                                String zoneName, boolean available, Instant salesEndsAt) {
+    }
+
+<span class="fc" id="L23">    public record CreateTicketTypeRequest(</span>
+            @NotBlank @Size(max = 120) String name,
+            String description,
+            @NotNull @Valid MoneyDto price,
+            UUID zoneId,
+            @NotNull @Min(1) Integer totalQuantity,
+            Instant salesStartsAt,
+            Instant salesEndsAt) {
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

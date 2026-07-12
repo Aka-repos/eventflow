@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Payment.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.payments.domain</a> &gt; <span class="el_source">Payment.java</span></div><h1>Payment.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.payments.domain;
+
+import com.eventflow.shared.domain.Money;
+import com.eventflow.shared.domain.Uuids;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
+
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.UUID;
+
+/**
+ * Payment-intent (auditoría A2): la fila PENDING se persiste ANTES de invocar al proveedor;
+ * el índice único uq_payments_order_settled hace físicamente imposible cobrar dos veces (A4).
+ */
+@Entity
+@Table(name = &quot;payments&quot;, schema = &quot;commerce&quot;)
+public class Payment {
+
+    @Id
+    private UUID id;
+
+    @Column(name = &quot;order_id&quot;, nullable = false, updatable = false)
+    private UUID orderId;
+
+    @Column(nullable = false, updatable = false)
+    private String provider;
+
+    @Column(name = &quot;provider_ref&quot;)
+    private String providerRef;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private PaymentStatus status;
+
+    @Column(nullable = false, updatable = false)
+    private BigDecimal amount;
+
+    @Column(nullable = false, updatable = false, columnDefinition = &quot;char(3)&quot;)
+    private String currency;
+
+    @Column(name = &quot;failure_reason&quot;)
+    private String failureReason;
+
+    @CreationTimestamp
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private Instant createdAt;
+
+    @UpdateTimestamp
+    @Column(name = &quot;updated_at&quot;, nullable = false)
+    private Instant updatedAt;
+
+<span class="fc" id="L59">    protected Payment() {</span>
+<span class="fc" id="L60">    }</span>
+
+<span class="fc" id="L62">    private Payment(UUID id, UUID orderId, String provider, Money amount) {</span>
+<span class="fc" id="L63">        this.id = id;</span>
+<span class="fc" id="L64">        this.orderId = orderId;</span>
+<span class="fc" id="L65">        this.provider = provider;</span>
+<span class="fc" id="L66">        this.status = PaymentStatus.PENDING;</span>
+<span class="fc" id="L67">        this.amount = amount.amount();</span>
+<span class="fc" id="L68">        this.currency = amount.currency();</span>
+<span class="fc" id="L69">    }</span>
+
+    public static Payment intent(UUID orderId, String provider, Money amount) {
+<span class="fc" id="L72">        return new Payment(Uuids.v7(), orderId, provider, amount);</span>
+    }
+
+    public void approve(String providerRef) {
+<span class="fc" id="L76">        requirePending();</span>
+<span class="fc" id="L77">        this.status = PaymentStatus.APPROVED;</span>
+<span class="fc" id="L78">        this.providerRef = providerRef;</span>
+<span class="fc" id="L79">    }</span>
+
+    public void decline(String reason) {
+<span class="fc" id="L82">        requirePending();</span>
+<span class="fc" id="L83">        this.status = PaymentStatus.DECLINED;</span>
+<span class="fc" id="L84">        this.failureReason = reason;</span>
+<span class="fc" id="L85">    }</span>
+
+    private void requirePending() {
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">        if (status != PaymentStatus.PENDING) {</span>
+<span class="nc" id="L89">            throw new IllegalStateException(&quot;El intento de pago ya fue resuelto: &quot; + status);</span>
+        }
+<span class="fc" id="L91">    }</span>
+
+    public UUID getId() {
+<span class="fc" id="L94">        return id;</span>
+    }
+
+    public UUID getOrderId() {
+<span class="nc" id="L98">        return orderId;</span>
+    }
+
+    public String getProvider() {
+<span class="fc" id="L102">        return provider;</span>
+    }
+
+    public PaymentStatus getStatus() {
+<span class="fc" id="L106">        return status;</span>
+    }
+
+    public Money getAmount() {
+<span class="fc" id="L110">        return new Money(amount, currency);</span>
+    }
+
+    public String getFailureReason() {
+<span class="fc" id="L114">        return failureReason;</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

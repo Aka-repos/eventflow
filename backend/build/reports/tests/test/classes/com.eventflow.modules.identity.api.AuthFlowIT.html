@@ -41,7 +41,7 @@
 </td>
 <td>
 <div class="infoBox" id="duration">
-<div class="counter">1.354s</div>
+<div class="counter">0.816s</div>
 <p>duration</p>
 </div>
 </td>
@@ -79,37 +79,37 @@
 </thead>
 <tr>
 <td class="success">t01_register_returns_201_with_tokens_and_profile()</td>
-<td class="success">0.602s</td>
+<td class="success">0.108s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">t02_duplicate_email_returns_409_problem()</td>
-<td class="success">0.091s</td>
+<td class="success">0.088s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">t03_duplicate_email_is_case_insensitive_thanks_to_citext()</td>
-<td class="success">0.078s</td>
+<td class="success">0.083s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">t04_validation_failure_returns_422_with_field_errors()</td>
-<td class="success">0.024s</td>
+<td class="success">0.026s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">t05_login_with_wrong_password_returns_401_invalid_credentials()</td>
-<td class="success">0.150s</td>
+<td class="success">0.144s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">t06_login_returns_tokens_and_access_token_grants_access()</td>
-<td class="success">0.165s</td>
+<td class="success">0.157s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
 <td class="success">t07_refresh_rotates_token_and_old_one_stops_working()</td>
-<td class="success">0.146s</td>
+<td class="success">0.112s</td>
 <td class="success">passed</td>
 </tr>
 <tr>
@@ -132,31 +132,12 @@
 <div class="tab">
 <h2>Standard output</h2>
 <span class="code">
-<pre>22:56:49.492 [Test worker] INFO org.testcontainers.images.PullPolicy -- Image pull policy will be performed by: DefaultPullPolicy()
-22:56:49.497 [Test worker] INFO org.testcontainers.utility.ImageNameSubstitutor -- Image name substitution will be performed by: DefaultImageNameSubstitutor (composite of 'ConfigurationFileImageNameSubstitutor' and 'PrefixingImageNameSubstitutor')
-22:56:49.505 [Test worker] INFO org.testcontainers.DockerClientFactory -- Testcontainers version: 1.21.3
-22:56:49.917 [Test worker] INFO org.testcontainers.dockerclient.DockerClientProviderStrategy -- Found Docker environment with Environment variables, system properties and defaults. Resolved dockerHost=unix:///Users/andresvega/.docker/run/docker.sock
-22:56:49.918 [Test worker] INFO org.testcontainers.DockerClientFactory -- Docker host IP address is localhost
-22:56:49.931 [Test worker] INFO org.testcontainers.DockerClientFactory -- Connected to docker: 
-  Server Version: 29.4.0
-  API Version: 1.54
-  Operating System: Docker Desktop
-  Total Memory: 7936 MB
-  Labels: 
-    com.docker.desktop.address=unix:///Users/andresvega/Library/Containers/com.docker.docker/Data/docker-cli.sock
-22:56:50.031 [Test worker] INFO tc.testcontainers/ryuk:0.12.0 -- Creating container for image: testcontainers/ryuk:0.12.0
-22:56:50.195 [Test worker] INFO org.testcontainers.utility.RegistryAuthLocator -- Credential helper/store (docker-credential-desktop) does not have credentials for https://index.docker.io/v1/
-22:56:50.324 [Test worker] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 is starting: fc85d19fa8909c22781c9bccf4e55740151733615fde8f663475f102806ec40d
-22:56:50.539 [Test worker] INFO tc.testcontainers/ryuk:0.12.0 -- Container testcontainers/ryuk:0.12.0 started in PT0.507753S
-22:56:50.543 [Test worker] INFO org.testcontainers.utility.RyukResourceReaper -- Ryuk started - will monitor and terminate Testcontainers containers on JVM exit
-22:56:50.544 [Test worker] INFO org.testcontainers.DockerClientFactory -- Checking the system...
-22:56:50.544 [Test worker] INFO org.testcontainers.DockerClientFactory -- ✔︎ Docker server version should be at least 1.6.0
-22:56:50.545 [Test worker] INFO tc.postgres:17 -- Creating container for image: postgres:17
-22:56:50.587 [Test worker] INFO tc.postgres:17 -- Container postgres:17 is starting: cacde5d38737c49087d8b7e102a507ef753839a9836acd770672cb9af3e59641
-22:56:51.328 [Test worker] INFO tc.postgres:17 -- Container postgres:17 started in PT0.782486S
-22:56:51.328 [Test worker] INFO tc.postgres:17 -- Container is started (JDBC URL: jdbc:postgresql://localhost:52985/test?loggerLevel=OFF)
-22:56:51.392 [Test worker] INFO org.springframework.test.context.support.AnnotationConfigContextLoaderUtils -- Could not detect default configuration classes for test class [com.eventflow.modules.identity.api.AuthFlowIT]: AuthFlowIT does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-22:56:51.507 [Test worker] INFO org.springframework.boot.test.context.SpringBootTestContextBootstrapper -- Found @SpringBootConfiguration com.eventflow.EventFlowApplication for test class com.eventflow.modules.identity.api.AuthFlowIT
+<pre>2026-07-12T13:56:46.280-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Creating container for image: postgres:17
+2026-07-12T13:56:46.324-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Container postgres:17 is starting: 35c3bd50dab0af1791fff20d396f373937b2b4081142259fb1907c4f783e2c4e
+2026-07-12T13:56:46.943-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Container postgres:17 started in PT0.662898S
+2026-07-12T13:56:46.944-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] tc.postgres:17                           : Container is started (JDBC URL: jdbc:postgresql://localhost:50016/test?loggerLevel=OFF)
+2026-07-12T13:56:46.946-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.eventflow.modules.identity.api.AuthFlowIT]: AuthFlowIT does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
+2026-07-12T13:56:46.982-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.eventflow.EventFlowApplication for test class com.eventflow.modules.identity.api.AuthFlowIT
 
   .   ____          _            __ _ _
  /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
@@ -167,61 +148,59 @@
 
  :: Spring Boot ::                (v3.5.6)
 
-2026-07-10T22:56:51.819-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] c.e.modules.identity.api.AuthFlowIT      : Starting AuthFlowIT using Java 17.0.19 with PID 4075 (started by andresvega in /Users/andresvega/IdeaProjects/EventFlow/backend)
-2026-07-10T22:56:51.820-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] c.e.modules.identity.api.AuthFlowIT      : No active profile set, falling back to 1 default profile: &quot;default&quot;
-2026-07-10T22:56:52.498-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
-2026-07-10T22:56:52.537-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 33 ms. Found 3 JPA repository interfaces.
-2026-07-10T22:56:53.209-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:52985/test?loggerLevel=OFF (PostgreSQL 17.10)
-2026-07-10T22:56:53.243-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table &quot;public&quot;.&quot;flyway_schema_history&quot; does not exist yet
-2026-07-10T22:56:53.246-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbValidate     : Successfully validated 9 migrations (execution time 00:00.018s)
-2026-07-10T22:56:53.256-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table &quot;public&quot;.&quot;flyway_schema_history&quot; ...
-2026-07-10T22:56:53.301-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Current version of schema &quot;public&quot;: &lt;&lt; Empty Schema &gt;&gt;
-2026-07-10T22:56:53.308-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;1 - schemas and extensions&quot;
-2026-07-10T22:56:53.341-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;2 - identity&quot;
-2026-07-10T22:56:53.360-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;3 - catalog&quot;
-2026-07-10T22:56:53.380-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;4 - ticketing&quot;
-2026-07-10T22:56:53.403-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;5 - commerce&quot;
-2026-07-10T22:56:53.433-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;6 - parking&quot;
-2026-07-10T22:56:53.449-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;7 - ops&quot;
-2026-07-10T22:56:53.467-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;8 - privileges and rls&quot;
-2026-07-10T22:56:53.480-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;9 - seed&quot;
-2026-07-10T22:56:53.489-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Successfully applied 9 migrations to schema &quot;public&quot;, now at version v9 (execution time 00:00.107s)
-2026-07-10T22:56:53.551-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
-2026-07-10T22:56:53.591-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.6.29.Final
-2026-07-10T22:56:53.621-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
-2026-07-10T22:56:53.810-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
-2026-07-10T22:56:53.829-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
-2026-07-10T22:56:53.854-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection org.postgresql.jdbc.PgConnection@f37adbc
-2026-07-10T22:56:53.855-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
-2026-07-10T22:56:53.906-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
-	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-1)']
+2026-07-12T13:56:47.010-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] c.e.modules.identity.api.AuthFlowIT      : Starting AuthFlowIT using Java 17.0.19 with PID 55204 (started by andresvega in /Users/andresvega/IdeaProjects/EventFlow/backend)
+2026-07-12T13:56:47.011-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] c.e.modules.identity.api.AuthFlowIT      : No active profile set, falling back to 1 default profile: &quot;default&quot;
+2026-07-12T13:56:47.258-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-07-12T13:56:47.283-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 23 ms. Found 12 JPA repository interfaces.
+2026-07-12T13:56:47.457-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] org.flywaydb.core.FlywayExecutor         : Database: jdbc:postgresql://localhost:50016/test?loggerLevel=OFF (PostgreSQL 17.10)
+2026-07-12T13:56:47.469-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.c.i.s.JdbcTableSchemaHistory         : Schema history table &quot;public&quot;.&quot;flyway_schema_history&quot; does not exist yet
+2026-07-12T13:56:47.470-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbValidate     : Successfully validated 9 migrations (execution time 00:00.007s)
+2026-07-12T13:56:47.477-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.c.i.s.JdbcTableSchemaHistory         : Creating Schema History table &quot;public&quot;.&quot;flyway_schema_history&quot; ...
+2026-07-12T13:56:47.499-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Current version of schema &quot;public&quot;: &lt;&lt; Empty Schema &gt;&gt;
+2026-07-12T13:56:47.503-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;1 - schemas and extensions&quot;
+2026-07-12T13:56:47.525-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;2 - identity&quot;
+2026-07-12T13:56:47.541-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;3 - catalog&quot;
+2026-07-12T13:56:47.559-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;4 - ticketing&quot;
+2026-07-12T13:56:47.584-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;5 - commerce&quot;
+2026-07-12T13:56:47.608-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;6 - parking&quot;
+2026-07-12T13:56:47.621-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;7 - ops&quot;
+2026-07-12T13:56:47.635-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;8 - privileges and rls&quot;
+2026-07-12T13:56:47.646-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Migrating schema &quot;public&quot; to version &quot;9 - seed&quot;
+2026-07-12T13:56:47.650-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.f.core.internal.command.DbMigrate      : Successfully applied 9 migrations to schema &quot;public&quot;, now at version v9 (execution time 00:00.074s)
+2026-07-12T13:56:47.673-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-07-12T13:56:47.676-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-07-12T13:56:47.683-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-07-12T13:56:47.684-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Starting...
+2026-07-12T13:56:47.695-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.pool.HikariPool        : HikariPool-3 - Added connection org.postgresql.jdbc.PgConnection@5670aa56
+2026-07-12T13:56:47.695-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] com.zaxxer.hikari.HikariDataSource       : HikariPool-3 - Start completed.
+2026-07-12T13:56:47.697-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] org.hibernate.orm.connections.pooling    : HHH10001005: Database info:
+	Database JDBC URL [Connecting through datasource 'HikariDataSource (HikariPool-3)']
 	Database driver: undefined/unknown
 	Database version: 17.10
 	Autocommit mode: undefined/unknown
 	Isolation level: undefined/unknown
 	Minimum pool size: undefined/unknown
 	Maximum pool size: undefined/unknown
-2026-07-10T22:56:54.508-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
-2026-07-10T22:56:54.510-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
-2026-07-10T22:56:54.697-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
-2026-07-10T22:56:55.237-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
-2026-07-10T22:56:55.258-05:00  WARN [cid=] 4075 --- [eventflow-backend] [    Test worker] .s.s.UserDetailsServiceAutoConfiguration : 
+2026-07-12T13:56:47.782-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+2026-07-12T13:56:47.782-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-07-12T13:56:48.179-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.b.a.e.web.EndpointLinksResolver      : Exposing 1 endpoint beneath base path '/actuator'
+2026-07-12T13:56:48.199-05:00  WARN [cid=] 55204 --- [eventflow-backend] [    Test worker] .s.s.UserDetailsServiceAutoConfiguration : 
 
-Using generated security password: bce7db9c-645e-44ac-aa02-c17c10234c8c
+Using generated security password: 8628e707-5652-4473-ac5c-ded845cf34b0
 
 This generated password is for development use only. Your security configuration must be updated before running your application in production.
 
-2026-07-10T22:56:55.262-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
-2026-07-10T22:56:55.576-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
-2026-07-10T22:56:55.576-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
-2026-07-10T22:56:55.577-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
-2026-07-10T22:56:55.634-05:00  INFO [cid=] 4075 --- [eventflow-backend] [    Test worker] c.e.modules.identity.api.AuthFlowIT      : Started AuthFlowIT in 4.033 seconds (process running for 6.863)
-2026-07-10T22:56:56.344-05:00  WARN [cid=e4c0ff1e-6c10-426f-8b52-e30683075d98] 4075 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=email_already_registered detail=El email ya está registrado
-2026-07-10T22:56:56.427-05:00  WARN [cid=a6176420-ecbe-4637-9df2-985b1b76e3cc] 4075 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=email_already_registered detail=El email ya está registrado
-2026-07-10T22:56:56.602-05:00  WARN [cid=1ac042f6-3c61-4b83-8dc8-5a14e3de6169] 4075 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=invalid_credentials detail=Email o contraseña incorrectos
-2026-07-10T22:56:56.910-05:00  WARN [cid=c98756c3-8596-4eb1-8a57-21c0667bedae] 4075 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=refresh_token_reused detail=Reuso de refresh token detectado; sesión revocada
-2026-07-10T22:56:56.915-05:00  WARN [cid=d99a97f7-8f89-437b-a3ed-f9031475a25d] 4075 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=token_invalid detail=El refresh token no es válido o expiró
-2026-07-10T22:56:57.001-05:00  WARN [cid=257d5e67-dd4a-480a-8d2f-c6149bb998e0] 4075 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=token_invalid detail=El refresh token no es válido o expiró
+2026-07-12T13:56:48.200-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2026-07-12T13:56:48.340-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
+2026-07-12T13:56:48.340-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
+2026-07-12T13:56:48.341-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
+2026-07-12T13:56:48.356-05:00  INFO [cid=] 55204 --- [eventflow-backend] [    Test worker] c.e.modules.identity.api.AuthFlowIT      : Started AuthFlowIT in 1.371 seconds (process running for 12.971)
+2026-07-12T13:56:48.548-05:00  WARN [cid=6aabd8f8-312d-4c8a-9a8f-21b555d529e6] 55204 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=email_already_registered detail=El email ya está registrado
+2026-07-12T13:56:48.635-05:00  WARN [cid=ea57c76a-ae6d-4c13-a055-2711f0d58db5] 55204 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=email_already_registered detail=El email ya está registrado
+2026-07-12T13:56:48.806-05:00  WARN [cid=4ca09c86-aea1-415a-ba20-172cb1e42ab4] 55204 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=invalid_credentials detail=Email o contraseña incorrectos
+2026-07-12T13:56:49.071-05:00  WARN [cid=e6942fcd-15e5-493c-8946-02c25e204d97] 55204 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=refresh_token_reused detail=Reuso de refresh token detectado; sesión revocada
+2026-07-12T13:56:49.076-05:00  WARN [cid=c89dfa51-f897-40ab-a184-be765a587f54] 55204 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=token_invalid detail=El refresh token no es válido o expiró
+2026-07-12T13:56:49.162-05:00  WARN [cid=2827a66c-f596-427e-aa29-b3c81703866e] 55204 --- [eventflow-backend] [    Test worker] c.e.shared.error.GlobalExceptionHandler  : domain_error code=token_invalid detail=El refresh token no es válido o expiró
 </pre>
 </span>
 </div>
@@ -233,7 +212,7 @@ This generated password is for development use only. Your security configuration
 <input id="line-wrapping-toggle" type="checkbox" autocomplete="off"/>
 </label>
 </div>Generated by 
-<a href="https://www.gradle.org">Gradle 8.13</a> at 07/10/2026 10:57:00 p. m.</p>
+<a href="https://www.gradle.org">Gradle 8.13</a> at 07/12/2026 1:56:57 p. m.</p>
 </div>
 </div>
 </body>

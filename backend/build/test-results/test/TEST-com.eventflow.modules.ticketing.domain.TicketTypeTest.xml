@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.eventflow.modules.ticketing.domain.TicketTypeTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-07-12T18:56:54.480Z" hostname="MacBook-Air-de-Andres.local" time="0.002">
+  <properties/>
+  <testcase name="update_without_sales_allows_everything()" classname="com.eventflow.modules.ticketing.domain.TicketTypeTest" time="0.0"/>
+  <testcase name="update_with_sales_allows_description_window_and_quantity_increase()" classname="com.eventflow.modules.ticketing.domain.TicketTypeTest" time="0.001"/>
+  <testcase name="delete_guard_rejects_when_sold()" classname="com.eventflow.modules.ticketing.domain.TicketTypeTest" time="0.0"/>
+  <testcase name="update_with_sales_rejects_quantity_below_sold()" classname="com.eventflow.modules.ticketing.domain.TicketTypeTest" time="0.0"/>
+  <testcase name="update_with_sales_rejects_price_zone_name_changes()" classname="com.eventflow.modules.ticketing.domain.TicketTypeTest" time="0.0"/>
+  <testcase name="create_validates_quantity_and_price()" classname="com.eventflow.modules.ticketing.domain.TicketTypeTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EventUpdate.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.catalog.domain</a> &gt; <span class="el_source">EventUpdate.java</span></div><h1>EventUpdate.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.catalog.domain;
+
+import java.time.Instant;
+import java.util.Optional;
+
+/**
+ * Cambio parcial sobre el agregado Event (PATCH). Cada campo distingue &quot;ausente&quot; de &quot;presente&quot;;
+ * los presentes se validan contra el estado del evento (publicado ⇒ solo campos seguros).
+ */
+public final class EventUpdate {
+
+    private final String title;
+    private final String description;
+    private final Short categoryId;
+    private final String venueName;
+    private final boolean addressPresent;
+    private final String address;
+    private final boolean geoPresent;
+    private final Double latitude;
+    private final Double longitude;
+    private final String timezone;
+    private final Instant startsAt;
+    private final Instant endsAt;
+    private final boolean coverUrlPresent;
+    private final String coverUrl;
+
+<span class="fc" id="L27">    private EventUpdate(Builder b) {</span>
+<span class="fc" id="L28">        this.title = b.title;</span>
+<span class="fc" id="L29">        this.description = b.description;</span>
+<span class="fc" id="L30">        this.categoryId = b.categoryId;</span>
+<span class="fc" id="L31">        this.venueName = b.venueName;</span>
+<span class="fc" id="L32">        this.addressPresent = b.addressPresent;</span>
+<span class="fc" id="L33">        this.address = b.address;</span>
+<span class="fc" id="L34">        this.geoPresent = b.geoPresent;</span>
+<span class="fc" id="L35">        this.latitude = b.latitude;</span>
+<span class="fc" id="L36">        this.longitude = b.longitude;</span>
+<span class="fc" id="L37">        this.timezone = b.timezone;</span>
+<span class="fc" id="L38">        this.startsAt = b.startsAt;</span>
+<span class="fc" id="L39">        this.endsAt = b.endsAt;</span>
+<span class="fc" id="L40">        this.coverUrlPresent = b.coverUrlPresent;</span>
+<span class="fc" id="L41">        this.coverUrl = b.coverUrl;</span>
+<span class="fc" id="L42">    }</span>
+
+    public Optional&lt;String&gt; title() {
+<span class="fc" id="L45">        return Optional.ofNullable(title);</span>
+    }
+
+    public Optional&lt;String&gt; description() {
+<span class="fc" id="L49">        return Optional.ofNullable(description);</span>
+    }
+
+    public Optional&lt;Short&gt; categoryId() {
+<span class="fc" id="L53">        return Optional.ofNullable(categoryId);</span>
+    }
+
+    public Optional&lt;String&gt; venueName() {
+<span class="fc" id="L57">        return Optional.ofNullable(venueName);</span>
+    }
+
+    public boolean addressPresent() {
+<span class="fc" id="L61">        return addressPresent;</span>
+    }
+
+    public String address() {
+<span class="fc" id="L65">        return address;</span>
+    }
+
+    public boolean geoPresent() {
+<span class="fc" id="L69">        return geoPresent;</span>
+    }
+
+    public Double latitude() {
+<span class="fc" id="L73">        return latitude;</span>
+    }
+
+    public Double longitude() {
+<span class="fc" id="L77">        return longitude;</span>
+    }
+
+    public Optional&lt;String&gt; timezone() {
+<span class="fc" id="L81">        return Optional.ofNullable(timezone);</span>
+    }
+
+    public Optional&lt;Instant&gt; startsAt() {
+<span class="fc" id="L85">        return Optional.ofNullable(startsAt);</span>
+    }
+
+    public Optional&lt;Instant&gt; endsAt() {
+<span class="fc" id="L89">        return Optional.ofNullable(endsAt);</span>
+    }
+
+    public boolean coverUrlPresent() {
+<span class="fc" id="L93">        return coverUrlPresent;</span>
+    }
+
+    public String coverUrl() {
+<span class="fc" id="L97">        return coverUrl;</span>
+    }
+
+    /** Campos que un evento PUBLICADO no admite (frozen: &quot;publicado solo campos seguros&quot;). */
+    public boolean touchesUnsafeFieldsForPublished() {
+<span class="fc bfc" id="L102" title="All 10 branches covered.">        return title != null || categoryId != null || venueName != null || timezone != null || geoPresent;</span>
+    }
+
+    public boolean touchesSchedule() {
+<span class="pc bpc" id="L106" title="1 of 4 branches missed.">        return startsAt != null || endsAt != null;</span>
+    }
+
+    public static Builder builder() {
+<span class="fc" id="L110">        return new Builder();</span>
+    }
+
+<span class="fc" id="L113">    public static final class Builder {</span>
+        private String title;
+        private String description;
+        private Short categoryId;
+        private String venueName;
+        private boolean addressPresent;
+        private String address;
+        private boolean geoPresent;
+        private Double latitude;
+        private Double longitude;
+        private String timezone;
+        private Instant startsAt;
+        private Instant endsAt;
+        private boolean coverUrlPresent;
+        private String coverUrl;
+
+        public Builder title(String v) {
+<span class="fc" id="L130">            this.title = v;</span>
+<span class="fc" id="L131">            return this;</span>
+        }
+
+        public Builder description(String v) {
+<span class="fc" id="L135">            this.description = v;</span>
+<span class="fc" id="L136">            return this;</span>
+        }
+
+        public Builder categoryId(Short v) {
+<span class="fc" id="L140">            this.categoryId = v;</span>
+<span class="fc" id="L141">            return this;</span>
+        }
+
+        public Builder venueName(String v) {
+<span class="fc" id="L145">            this.venueName = v;</span>
+<span class="fc" id="L146">            return this;</span>
+        }
+
+        public Builder address(String v) {
+<span class="fc" id="L150">            this.addressPresent = true;</span>
+<span class="fc" id="L151">            this.address = v;</span>
+<span class="fc" id="L152">            return this;</span>
+        }
+
+        public Builder geo(Double lat, Double lng) {
+<span class="fc" id="L156">            this.geoPresent = true;</span>
+<span class="fc" id="L157">            this.latitude = lat;</span>
+<span class="fc" id="L158">            this.longitude = lng;</span>
+<span class="fc" id="L159">            return this;</span>
+        }
+
+        public Builder timezone(String v) {
+<span class="fc" id="L163">            this.timezone = v;</span>
+<span class="fc" id="L164">            return this;</span>
+        }
+
+        public Builder startsAt(Instant v) {
+<span class="fc" id="L168">            this.startsAt = v;</span>
+<span class="fc" id="L169">            return this;</span>
+        }
+
+        public Builder endsAt(Instant v) {
+<span class="fc" id="L173">            this.endsAt = v;</span>
+<span class="fc" id="L174">            return this;</span>
+        }
+
+        public Builder coverUrl(String v) {
+<span class="fc" id="L178">            this.coverUrlPresent = true;</span>
+<span class="fc" id="L179">            this.coverUrl = v;</span>
+<span class="fc" id="L180">            return this;</span>
+        }
+
+        public EventUpdate build() {
+<span class="fc" id="L184">            return new EventUpdate(this);</span>
+        }
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

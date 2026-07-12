@@ -197,7 +197,7 @@ UC90 ..> UC52 : <<include>>
 UC43 ..> UC91 : <<include>>
 @enduml
 ```
-
+![alt text](image-1.png)
 ## 3. Notas de trazabilidad
 
 - **UC30 (Cancelación inteligente)** es el punto de entrada único: el sistema evalúa `EventPolicy` + estado del boleto y ofrece **solo** la acción válida (reembolso *o* publicación, nunca ambas). Los `<<extend>>` reflejan esa exclusión mutua.

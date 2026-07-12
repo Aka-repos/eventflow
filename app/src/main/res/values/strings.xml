@@ -26,4 +26,53 @@
     <string name="error_email_taken">Ese email ya está registrado</string>
     <string name="error_network">Sin conexión. Intenta de nuevo</string>
     <string name="error_unknown">Algo salió mal. Intenta de nuevo</string>
+
+    <!-- Catálogo (Módulo 2) -->
+    <string name="catalog_tab_explore">Explorar</string>
+    <string name="catalog_tab_favorites">Favoritos</string>
+    <string name="catalog_search_hint">Busca eventos…</string>
+    <string name="catalog_all_categories">Todas</string>
+    <string name="catalog_empty">No hay eventos que coincidan</string>
+    <string name="catalog_load_more">Cargar más</string>
+    <string name="catalog_retry">Reintentar</string>
+    <string name="catalog_price_from">Desde %1$s</string>
+    <string name="catalog_sold_out">Agotado</string>
+    <string name="catalog_favorite_add">Agregar a favoritos</string>
+    <string name="catalog_favorite_remove">Quitar de favoritos</string>
+    <string name="catalog_favorites_empty">Aún no tienes favoritos.\nToca el corazón de un evento para guardarlo aquí.</string>
+
+    <string name="detail_back">Volver</string>
+    <string name="detail_tickets">Entradas</string>
+    <string name="detail_zone">Zona %1$s</string>
+    <string name="detail_available">Disponible</string>
+    <string name="detail_not_available">No disponible</string>
+    <string name="detail_organized_by">Organiza: %1$s</string>
+    <string name="detail_sponsors">Patrocinan</string>
+    <string name="detail_policies">Políticas</string>
+    <string name="detail_policy_refund_until">Reembolsos hasta %1$s</string>
+    <string name="detail_policy_no_refund">Sin ventana de reembolso configurada</string>
+    <string name="detail_policy_exchange_on">Exchange oficial habilitado (depreciación %1$d%%)</string>
+    <string name="detail_policy_exchange_off">Exchange oficial deshabilitado</string>
+    <string name="detail_policy_waitlist_on">Lista de espera habilitada</string>
+    <string name="detail_policy_qr">QR visible %1$d h antes del evento</string>
+    <string name="detail_event_not_found">Este evento ya no está disponible</string>
+    <string name="detail_buy">Comprar</string>
+
+    <!-- Checkout / Órdenes / Boletos (Módulo 3) -->
+    <string name="checkout_title">Confirmar compra</string>
+    <string name="checkout_total">Total</string>
+    <string name="checkout_quantity">Cantidad: %1$d</string>
+    <string name="checkout_confirm">Crear orden</string>
+    <string name="checkout_pay">Pagar</string>
+    <string name="checkout_processing">Procesando…</string>
+    <string name="checkout_cancel_order">Cancelar orden</string>
+    <string name="checkout_expires">Paga antes de %1$s o el cupo se libera</string>
+    <string name="checkout_sold_out">Se agotó el cupo mientras confirmabas. Intenta con otra tarifa.</string>
+    <string name="catalog_tab_tickets">Boletos</string>
+    <string name="catalog_tab_orders">Órdenes</string>
+    <string name="tickets_empty">Aún no tienes boletos.\nCompra tu primera entrada desde Explorar.</string>
+    <string name="tickets_offline_notice">Sin conexión: mostrando datos guardados</string>
+    <string name="tickets_qr_available_at">QR disponible desde %1$s</string>
+    <string name="orders_empty">No tienes órdenes todavía</string>
+    <string name="orders_cancel">Cancelar</string>
 </resources>

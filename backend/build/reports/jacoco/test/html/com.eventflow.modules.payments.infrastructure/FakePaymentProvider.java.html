@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>FakePaymentProvider.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">eventflow-backend</a> &gt; <a href="index.source.html" class="el_package">com.eventflow.modules.payments.infrastructure</a> &gt; <span class="el_source">FakePaymentProvider.java</span></div><h1>FakePaymentProvider.java</h1><pre class="source lang-java linenums">package com.eventflow.modules.payments.infrastructure;
+
+import com.eventflow.modules.payments.domain.port.PaymentProvider;
+import com.eventflow.shared.domain.Money;
+import org.springframework.stereotype.Component;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+/**
+ * Proveedor simulado (global_config payments.providers=[FAKE]). Determinista: aprueba todo salvo
+ * montos terminados en &quot;.13&quot; (gancho documentado del flujo 402). Mantiene un registro en memoria
+ * de lo procesado — el &quot;ledger del proveedor&quot; que la reconciliación consulta vía lookup().
+ */
+@Component
+<span class="fc" id="L18">class FakePaymentProvider implements PaymentProvider {</span>
+
+<span class="fc" id="L20">    private final Map&lt;UUID, ProviderResult&gt; processed = new ConcurrentHashMap&lt;&gt;();</span>
+
+    @Override
+    public ProviderResult authorize(UUID paymentId, UUID orderId, Money amount, String method) {
+<span class="fc bfc" id="L24" title="All 2 branches covered.">        ProviderResult result = amount.amount().toPlainString().endsWith(&quot;.13&quot;)</span>
+<span class="fc" id="L25">                ? ProviderResult.declined(&quot;La tarjeta fue rechazada por el emisor&quot;)</span>
+<span class="fc" id="L26">                : ProviderResult.approved(&quot;FAKE-&quot; + paymentId);</span>
+<span class="fc" id="L27">        processed.put(paymentId, result);</span>
+<span class="fc" id="L28">        return result;</span>
+    }
+
+    @Override
+    public Optional&lt;ProviderResult&gt; lookup(UUID paymentId) {
+<span class="fc" id="L33">        return Optional.ofNullable(processed.get(paymentId));</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>

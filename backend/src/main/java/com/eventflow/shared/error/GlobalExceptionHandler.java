@@ -25,6 +25,25 @@ public class GlobalExceptionHandler {
         return ProblemFactory.from(ex.errorCode(), ex.getMessage(), request.getRequestURI());
     }
 
+    @ExceptionHandler(VersionConflictException.class)
+    ProblemDetail handleVersionConflict(VersionConflictException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemFactory.from(ex.errorCode(), ex.getMessage(), request.getRequestURI());
+        problem.setProperty("conflictVersion", ex.currentVersion());
+        return problem;
+    }
+
+    @ExceptionHandler(SemanticValidationException.class)
+    ProblemDetail handleSemanticValidation(SemanticValidationException ex, HttpServletRequest request) {
+        return ProblemFactory.validation(request.getRequestURI(), ex.fieldErrors());
+    }
+
+    @ExceptionHandler(org.springframework.orm.ObjectOptimisticLockingFailureException.class)
+    ProblemDetail handleOptimisticLock(HttpServletRequest request) {
+        return ProblemFactory.from(ErrorCode.VERSION_CONFLICT,
+                "El recurso fue modificado por otra operación; recarga e intenta de nuevo",
+                request.getRequestURI());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ProblemDetail handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
         List<Map<String, String>> errors = ex.getBindingResult().getFieldErrors().stream()
@@ -40,6 +59,20 @@ public class GlobalExceptionHandler {
     ProblemDetail handleUnreadable(HttpServletRequest request) {
         return ProblemFactory.from(ErrorCode.MALFORMED_REQUEST, "El cuerpo del request no es JSON válido",
                 request.getRequestURI());
+    }
+
+    @ExceptionHandler(org.springframework.web.bind.MissingRequestHeaderException.class)
+    ProblemDetail handleMissingHeader(org.springframework.web.bind.MissingRequestHeaderException ex,
+                                      HttpServletRequest request) {
+        return ProblemFactory.from(ErrorCode.MALFORMED_REQUEST,
+                "Falta el header requerido " + ex.getHeaderName(), request.getRequestURI());
+    }
+
+    @ExceptionHandler(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException.class)
+    ProblemDetail handleTypeMismatch(org.springframework.web.method.annotation.MethodArgumentTypeMismatchException ex,
+                                     HttpServletRequest request) {
+        return ProblemFactory.from(ErrorCode.MALFORMED_REQUEST,
+                "El parámetro '" + ex.getName() + "' tiene un formato inválido", request.getRequestURI());
     }
 
     @ExceptionHandler(NoResourceFoundException.class)

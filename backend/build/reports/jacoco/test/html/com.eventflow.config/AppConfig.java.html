@@ -2,15 +2,17 @@
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.time.Clock;
 
 @Configuration
-<span class="fc" id="L9">public class AppConfig {</span>
+@EnableScheduling
+<span class="fc" id="L11">public class AppConfig {</span>
 
     @Bean
     Clock clock() {
-<span class="fc" id="L13">        return Clock.systemUTC();</span>
+<span class="fc" id="L15">        return Clock.systemUTC();</span>
     }
 }
 </pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.12.202403310830</span></div></body></html>
