@@ -38,6 +38,11 @@ class JpaTicketRepositoryAdapter implements TicketRepository {
         return jpa.findById(id);
     }
 
+    @Override
+    public Optional<Ticket> findByIdForUpdate(UUID id) {
+        return jpa.lockById(id);
+    }
+
     /** Keyset (purchased_at DESC, id DESC) sobre ix_tickets_owner_status. */
     @Override
     public CursorPage<Ticket> findByOwner(UUID ownerId, TicketStatus status, String cursor, int limit) {

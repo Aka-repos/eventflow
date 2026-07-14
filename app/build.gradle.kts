@@ -72,6 +72,15 @@ dependencies {
 
     implementation(libs.androidx.security.crypto)
 
+    // Módulo 4: escáner QR de check-in (CameraX + ML Kit) — sensor físico oficial
+    implementation(libs.camerax.core)
+    implementation(libs.camerax.camera2)
+    implementation(libs.camerax.lifecycle)
+    implementation(libs.camerax.view)
+    implementation(libs.mlkit.barcode)
+    implementation(libs.accompanist.permissions)
+    implementation(libs.zxing.core)
+
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.turbine)

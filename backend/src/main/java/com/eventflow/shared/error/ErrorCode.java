@@ -36,6 +36,22 @@ public enum ErrorCode {
     EVENT_SOLD_OUT("event_sold_out", HttpStatus.CONFLICT, "Event sold out"),
     SALES_WINDOW_CLOSED("sales_window_closed", HttpStatus.UNPROCESSABLE_ENTITY, "Sales window closed"),
 
+    // QR / Check-in (api/02 §3, catálogo congelado)
+    QR_NOT_YET_VISIBLE("qr_not_yet_visible", HttpStatus.FORBIDDEN, "QR not yet visible"),
+    QR_INVALID("qr_invalid", HttpStatus.UNPROCESSABLE_ENTITY, "QR invalid"),
+    QR_EXPIRED("qr_expired", HttpStatus.UNPROCESSABLE_ENTITY, "QR expired"),
+    TICKET_BLOCKED("ticket_blocked", HttpStatus.CONFLICT, "Ticket blocked"),
+    ALREADY_USED("already_used", HttpStatus.CONFLICT, "Ticket already used"),
+    CHECKIN_WRONG_EVENT("checkin_wrong_event", HttpStatus.UNPROCESSABLE_ENTITY, "QR belongs to another event"),
+    STAFF_NOT_ASSIGNED("staff_not_assigned", HttpStatus.FORBIDDEN, "Not authorized to scan this event"),
+
+    // Cancelación inteligente / reembolsos (ADR-19, api/02 §3 catálogo congelado)
+    REFUND_WINDOW_CLOSED("refund_window_closed", HttpStatus.UNPROCESSABLE_ENTITY, "Refund window closed"),
+    REFUND_NOT_ALLOWED_EXCHANGE_ACQUIRED("refund_not_allowed_exchange_acquired",
+            HttpStatus.UNPROCESSABLE_ENTITY, "Ticket acquired via exchange cannot be refunded"),
+    REFUND_ALREADY_REQUESTED("refund_already_requested", HttpStatus.CONFLICT, "Refund already requested"),
+    REFUND_NOT_PENDING("refund_not_pending", HttpStatus.CONFLICT, "Refund not pending"),
+
     // Órdenes/pagos (api/02 §3, catálogo congelado)
     ORDER_EXPIRED("order_expired", HttpStatus.CONFLICT, "Order expired"),
     ORDER_NOT_PENDING("order_not_pending", HttpStatus.CONFLICT, "Order not pending"),

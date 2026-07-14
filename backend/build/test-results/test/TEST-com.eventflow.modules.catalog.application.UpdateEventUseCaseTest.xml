@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.eventflow.modules.catalog.application.UpdateEventUseCaseTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-07-12T18:56:46.244Z" hostname="MacBook-Air-de-Andres.local" time="0.012">
-  <properties/>
-  <testcase name="rescheduling_published_event_emits_event_rescheduled()" classname="com.eventflow.modules.catalog.application.UpdateEventUseCaseTest" time="0.002"/>
-  <testcase name="if_match_mismatch_is_version_conflict_with_current_version()" classname="com.eventflow.modules.catalog.application.UpdateEventUseCaseTest" time="0.009"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

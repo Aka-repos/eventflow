@@ -127,6 +127,26 @@ public class PaymentsFacade {
         return paymentRepository.findLatestByOrderId(orderId).map(PaymentsFacade::toResult);
     }
 
+    /**
+     * Reembolso del pago (D3: el fake siempre aprueba). Persiste el resultado del proveedor y muta
+     * APPROVED→REFUNDED en la MISMA TX del caso de uso (MANDATORY). uq_payments_order_settled cubre
+     * ambos estados, así que la transición no viola la unicidad.
+     */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public PaymentResult refund(UUID paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new IllegalStateException("Pago inexistente: " + paymentId));
+        provider.refund(paymentId, payment.getAmount());
+        payment.refund();
+        return toResult(paymentRepository.save(payment));
+    }
+
+    /** Pago liquidado (APPROVED/REFUNDED) de una orden — para localizar el pago de adquisición (C2). */
+    @Transactional(readOnly = true)
+    public Optional<PaymentResult> settledForOrder(UUID orderId) {
+        return paymentRepository.findSettledByOrderId(orderId).map(PaymentsFacade::toResult);
+    }
+
     /** Guard de expiración (ordering): una orden con intent abierto o liquidado NO debe expirar. */
     @Transactional(readOnly = true)
     public boolean hasOpenOrSettledIntent(UUID orderId) {

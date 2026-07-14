@@ -25,4 +25,14 @@ public class LedgerFacade {
                                   Map<String, Object> details) {
         writer.append(LedgerEntry.sale(buyerId, organizerId, amount, orderId, eventId, details));
     }
+
+    /**
+     * Reembolso (D1): asiento ORGANIZER → BUYER que revierte exactamente la venta primaria
+     * (SALE BUYER → ORGANIZER), comisión 0. Referencia el refund, no la orden.
+     */
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void recordRefund(UUID organizerId, UUID buyerId, Money amount, UUID refundId, UUID eventId,
+                             Map<String, Object> details) {
+        writer.append(LedgerEntry.refund(organizerId, buyerId, amount, refundId, eventId, details));
+    }
 }

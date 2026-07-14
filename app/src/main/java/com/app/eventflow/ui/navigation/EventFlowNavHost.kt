@@ -15,6 +15,10 @@ import com.app.eventflow.ui.feature.auth.register.RegisterRoute
 import com.app.eventflow.ui.feature.catalog.detail.EventDetailRoute
 import com.app.eventflow.ui.feature.checkout.CheckoutRoute
 import com.app.eventflow.ui.feature.home.HomeRoute
+import com.app.eventflow.ui.feature.qr.TicketQrRoute
+import com.app.eventflow.ui.feature.refunds.inbox.RefundInboxRoute
+import com.app.eventflow.ui.feature.refunds.recovery.RecoveryRoute
+import com.app.eventflow.ui.feature.scanner.ScannerRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import javax.inject.Inject
 
@@ -25,11 +29,23 @@ object Routes {
     const val HOME = "home"
     const val EVENT_DETAIL = "event/{eventId}"
     const val CHECKOUT = "checkout/{eventId}/{tariffId}/{quantity}"
+    const val TICKET_QR = "ticket/{ticketId}/qr"
+    const val SCANNER = "event/{eventId}/scan"
+    const val RECOVERY = "ticket/{ticketId}/recovery"
+    const val REFUND_INBOX = "organizer/event/{eventId}/refunds"
 
     fun eventDetail(eventId: String) = "event/$eventId"
 
     fun checkout(eventId: String, tariffId: String, quantity: Int) =
         "checkout/$eventId/$tariffId/$quantity"
+
+    fun ticketQr(ticketId: String) = "ticket/$ticketId/qr"
+
+    fun scanner(eventId: String) = "event/$eventId/scan"
+
+    fun recovery(ticketId: String) = "ticket/$ticketId/recovery"
+
+    fun refundInbox(eventId: String) = "organizer/event/$eventId/refunds"
 }
 
 @HiltViewModel
@@ -67,6 +83,8 @@ fun EventFlowNavHost(
         composable(Routes.HOME) {
             HomeRoute(
                 onNavigateToDetail = { eventId -> navController.navigate(Routes.eventDetail(eventId)) },
+                onNavigateToTicketQr = { ticketId -> navController.navigate(Routes.ticketQr(ticketId)) },
+                onNavigateToRecovery = { ticketId -> navController.navigate(Routes.recovery(ticketId)) },
             )
         }
         composable(Routes.EVENT_DETAIL) {
@@ -75,6 +93,8 @@ fun EventFlowNavHost(
                 onNavigateToCheckout = { eventId, tariffId ->
                     navController.navigate(Routes.checkout(eventId, tariffId, 1))
                 },
+                onNavigateToScanner = { eventId -> navController.navigate(Routes.scanner(eventId)) },
+                onNavigateToRefundInbox = { eventId -> navController.navigate(Routes.refundInbox(eventId)) },
             )
         }
         composable(Routes.CHECKOUT) {
@@ -84,6 +104,18 @@ fun EventFlowNavHost(
                 },
                 onNavigateBack = { navController.popBackStack() },
             )
+        }
+        composable(Routes.TICKET_QR) {
+            TicketQrRoute(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(Routes.SCANNER) {
+            ScannerRoute(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(Routes.RECOVERY) {
+            RecoveryRoute(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(Routes.REFUND_INBOX) {
+            RefundInboxRoute(onNavigateBack = { navController.popBackStack() })
         }
     }
 

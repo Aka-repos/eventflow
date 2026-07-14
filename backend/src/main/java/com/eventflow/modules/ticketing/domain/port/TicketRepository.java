@@ -16,6 +16,9 @@ public interface TicketRepository {
 
     Optional<Ticket> findById(UUID id);
 
+    /** Lock pesimista de la fila del boleto (serializa reembolso/transferencia concurrentes). */
+    Optional<Ticket> findByIdForUpdate(UUID id);
+
     CursorPage<Ticket> findByOwner(UUID ownerId, TicketStatus status, String cursor, int limit);
 
     /** ticketIds emitidos por ítem de orden (para OrderItemResponse.ticketIds). */

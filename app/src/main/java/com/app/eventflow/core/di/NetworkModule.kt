@@ -7,7 +7,9 @@ import com.app.eventflow.core.network.TokenAuthenticator
 import com.app.eventflow.core.security.TokenStore
 import com.app.eventflow.data.remote.api.AuthApi
 import com.app.eventflow.data.remote.api.CatalogApi
+import com.app.eventflow.data.remote.api.CheckInApi
 import com.app.eventflow.data.remote.api.OrdersApi
+import com.app.eventflow.data.remote.api.RefundApi
 import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import dagger.Module
 import dagger.Provides
@@ -103,4 +105,12 @@ object NetworkModule {
     @Provides
     @Singleton
     fun ordersApi(retrofit: Retrofit): OrdersApi = retrofit.create(OrdersApi::class.java)
+
+    @Provides
+    @Singleton
+    fun checkInApi(retrofit: Retrofit): CheckInApi = retrofit.create(CheckInApi::class.java)
+
+    @Provides
+    @Singleton
+    fun refundApi(retrofit: Retrofit): RefundApi = retrofit.create(RefundApi::class.java)
 }

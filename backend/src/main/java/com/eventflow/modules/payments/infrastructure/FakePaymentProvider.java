@@ -32,4 +32,10 @@ class FakePaymentProvider implements PaymentProvider {
     public Optional<ProviderResult> lookup(UUID paymentId) {
         return Optional.ofNullable(processed.get(paymentId));
     }
+
+    /** D3: el reembolso simulado siempre tiene éxito (100%). */
+    @Override
+    public RefundResult refund(UUID paymentId, Money amount) {
+        return RefundResult.ok("FAKE-REFUND-" + paymentId);
+    }
 }

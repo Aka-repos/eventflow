@@ -48,6 +48,12 @@ public class CatalogFacade {
         event.getId();
     }
 
+    /** ¿Este usuario es el organizador dueño del evento? (checkin→catalog S; no lanza). */
+    @Transactional(readOnly = true)
+    public boolean isEventOrganizer(UUID eventId, UUID userId) {
+        return eventRepository.findById(eventId).map(e -> e.isOwnedBy(userId)).orElse(false);
+    }
+
     /** Nombre de la zona si pertenece al evento (para validar zoneId de tarifas y componer respuestas). */
     @Transactional(readOnly = true)
     public Optional<String> zoneNameForEvent(UUID zoneId, UUID eventId) {

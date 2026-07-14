@@ -5,8 +5,11 @@ import com.eventflow.modules.ticketing.api.dto.TicketApiDtos.CategoryLite;
 import com.eventflow.modules.ticketing.api.dto.TicketApiDtos.EventSummaryLite;
 import com.eventflow.modules.ticketing.api.dto.TicketApiDtos.TicketDetail;
 import com.eventflow.modules.ticketing.api.dto.TicketApiDtos.TicketHistoryEntryDto;
+import com.eventflow.modules.ticketing.api.dto.TicketApiDtos.QrResponse;
 import com.eventflow.modules.ticketing.api.dto.TicketApiDtos.TicketResponse;
 import com.eventflow.modules.ticketing.application.GetTicketDetailUseCase;
+import com.eventflow.modules.ticketing.application.GetTicketQrUseCase;
+import com.eventflow.modules.ticketing.application.QrIssuer;
 import com.eventflow.modules.ticketing.application.ListMyTicketsUseCase;
 import com.eventflow.modules.ticketing.application.result.TicketView;
 import com.eventflow.modules.ticketing.domain.Ticket;
@@ -33,11 +36,14 @@ class TicketController {
 
     private final ListMyTicketsUseCase listTickets;
     private final GetTicketDetailUseCase getTicket;
+    private final GetTicketQrUseCase getTicketQr;
     private final Clock clock;
 
-    TicketController(ListMyTicketsUseCase listTickets, GetTicketDetailUseCase getTicket, Clock clock) {
+    TicketController(ListMyTicketsUseCase listTickets, GetTicketDetailUseCase getTicket,
+                     GetTicketQrUseCase getTicketQr, Clock clock) {
         this.listTickets = listTickets;
         this.getTicket = getTicket;
+        this.getTicketQr = getTicketQr;
         this.clock = clock;
     }
 
@@ -63,6 +69,13 @@ class TicketController {
                 MoneyDto.from(ticket.getOriginalPrice()), MoneyDto.from(ticket.getAcquisitionPrice()),
                 view.history().stream().map(h -> new TicketHistoryEntryDto(h.getFromStatus(),
                         h.getToStatus(), h.getCause(), h.getOccurredAt())).toList()));
+    }
+
+    @GetMapping("/{ticketId}/qr")
+    DataResponse<QrResponse> getTicketQr(@PathVariable UUID ticketId,
+                                         @AuthenticationPrincipal AuthenticatedUser user) {
+        QrIssuer.IssuedQr qr = getTicketQr.execute(user.id(), ticketId);
+        return DataResponse.of(new QrResponse(qr.token(), qr.expiresAt(), qr.refreshAfter()));
     }
 
     private TicketResponse toResponse(TicketView view) {

@@ -98,6 +98,60 @@ class DependencyRulesTest {
                             "com.eventflow.modules.identity.infrastructure..",
                             "com.eventflow.modules.identity.api..");
 
+    /** checkin → identity/catalog/ticketing SOLO por fachadas de application (fila checkin, S⁷/S). */
+    @ArchTest
+    static final ArchRule checkin_uses_only_facades =
+            noClasses().that().resideInAPackage("com.eventflow.modules.checkin..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "com.eventflow.modules.identity.domain..",
+                            "com.eventflow.modules.identity.infrastructure..",
+                            "com.eventflow.modules.identity.api..",
+                            "com.eventflow.modules.catalog.domain..",
+                            "com.eventflow.modules.catalog.infrastructure..",
+                            "com.eventflow.modules.catalog.api..",
+                            "com.eventflow.modules.ticketing.infrastructure..",
+                            "com.eventflow.modules.ticketing.api..");
+
+    /** Nadie llama a checkin (consumidor terminal de la cadena de acceso). */
+    @ArchTest
+    static final ArchRule no_module_calls_checkin =
+            noClasses().that().resideInAnyPackage(
+                            "com.eventflow.modules.identity..", "com.eventflow.modules.catalog..",
+                            "com.eventflow.modules.ticketing..", "com.eventflow.modules.ordering..",
+                            "com.eventflow.modules.payments..", "com.eventflow.modules.ledger..")
+                    .should().dependOnClassesThat().resideInAPackage("com.eventflow.modules.checkin..");
+
+    /** refunds → identity/catalog/ticketing/ordering/payments/ledger SOLO por fachadas (fila refunds). */
+    @ArchTest
+    static final ArchRule refunds_uses_only_facades =
+            noClasses().that().resideInAPackage("com.eventflow.modules.refunds..")
+                    .should().dependOnClassesThat().resideInAnyPackage(
+                            "com.eventflow.modules.identity.domain..",
+                            "com.eventflow.modules.identity.infrastructure..",
+                            "com.eventflow.modules.identity.api..",
+                            "com.eventflow.modules.catalog.domain..",
+                            "com.eventflow.modules.catalog.infrastructure..",
+                            "com.eventflow.modules.catalog.api..",
+                            "com.eventflow.modules.ticketing.infrastructure..",
+                            "com.eventflow.modules.ticketing.api..",
+                            "com.eventflow.modules.ordering.domain..",
+                            "com.eventflow.modules.ordering.infrastructure..",
+                            "com.eventflow.modules.ordering.api..",
+                            "com.eventflow.modules.payments.domain..",
+                            "com.eventflow.modules.payments.infrastructure..",
+                            "com.eventflow.modules.ledger.domain..",
+                            "com.eventflow.modules.ledger.infrastructure..");
+
+    /** Nadie llama a refunds (consumidor terminal; la liberación viaja como evento TicketReleased). */
+    @ArchTest
+    static final ArchRule no_module_calls_refunds =
+            noClasses().that().resideInAnyPackage(
+                            "com.eventflow.modules.identity..", "com.eventflow.modules.catalog..",
+                            "com.eventflow.modules.ticketing..", "com.eventflow.modules.ordering..",
+                            "com.eventflow.modules.payments..", "com.eventflow.modules.ledger..",
+                            "com.eventflow.modules.checkin..")
+                    .should().dependOnClassesThat().resideInAPackage("com.eventflow.modules.refunds..");
+
     /** La matriz es acíclica por construcción (doc 10 §3 última regla). */
     @ArchTest
     static final ArchRule modules_are_free_of_cycles =

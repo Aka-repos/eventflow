@@ -1,20 +1,103 @@
-*.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
-local.properties
-
-# Secretos — nunca commitear
+# ─────────────────────────────────────────────────────────────
+# Secretos y credenciales — NUNCA commitear (fuga crítica)
+# ─────────────────────────────────────────────────────────────
 .env
 .env.*
 !.env.example
+*.local
+secrets.properties
+signing.properties
+keystore.properties
+
+# Llaves / certificados / firmas
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.der
+*.crt
+*.cer
+id_rsa
+id_ed25519
+*.ppk
+
+# Config con claves de proveedores
+google-services.json
+GoogleService-Info.plist
+firebase-*.json
+*-service-account*.json
+aws.json
+.npmrc
+.pypirc
+
+# Config local que suele contener secretos o rutas de máquina
+local.properties
+/local.properties
+
+# Perfiles Spring locales/secretos (mantener application.yml con placeholders ${ENV})
+backend/src/main/resources/application-local.*
+backend/src/main/resources/application-secret*.*
+backend/src/main/resources/application-prod.*
+
+# ─────────────────────────────────────────────────────────────
+# Artefactos de build — decompilables y los reportes JaCoCo/HTML
+# incrustan TODO el código fuente (fuga de IP). No versionar.
+# ─────────────────────────────────────────────────────────────
+build/
+*/build/
+**/build/
+backend/build/
+app/build/
+/captures
+.externalNativeBuild
+.cxx
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+*.war
+*.apk
+*.aab
+*.dex
+*.hprof
+
+# ─────────────────────────────────────────────────────────────
+# Gradle
+# ─────────────────────────────────────────────────────────────
+.gradle/
+**/.gradle/
+
+# ─────────────────────────────────────────────────────────────
+# IDE (JetBrains / Android Studio) — solo lo sensible o de máquina
+# ─────────────────────────────────────────────────────────────
+*.iml
+.idea/caches
+.idea/libraries
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/deploymentTargetSelector.xml
+.idea/deploymentTargetDropDown.xml
+.idea/misc.xml
+.idea/runConfigurations.xml
+.idea/**/dataSources/
+.idea/**/dataSources.ids
+.idea/**/sqlDataSources.xml
+.idea/**/dynamic.xml
+.idea/httpRequests/
+
+# ─────────────────────────────────────────────────────────────
+# Sistema operativo / editores
+# ─────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# ─────────────────────────────────────────────────────────────
+# Documentación y scripts internos (decisión del proyecto)
+# ─────────────────────────────────────────────────────────────
+/docs
+/scripts

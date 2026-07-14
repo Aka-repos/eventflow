@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /** Emisión primaria del boleto: snapshot de política (ADR-03), precios C2 y qrAvailableAt derivado. */
 class TicketTest {
@@ -63,5 +64,45 @@ class TicketTest {
                 Map.of("refundWindowEndsAt", PURCHASED.plusSeconds(3600).toString()), PURCHASED);
         assertThat(refundWindow.canRecover(PURCHASED)).isTrue();
         assertThat(refundWindow.canRecover(PURCHASED.plusSeconds(7200))).isFalse();
+    }
+
+    @Test
+    void request_refund_moves_active_to_refund_pending() {
+        Ticket ticket = issued();
+        ticket.requestRefund();
+        assertThat(ticket.getStatus()).isEqualTo(TicketStatus.REFUND_PENDING);
+    }
+
+    @Test
+    void approve_refund_moves_pending_to_refunded() {
+        Ticket ticket = issued();
+        ticket.requestRefund();
+        ticket.approveRefund();
+        assertThat(ticket.getStatus()).isEqualTo(TicketStatus.REFUNDED);
+    }
+
+    @Test
+    void reject_refund_returns_to_active() {
+        Ticket ticket = issued();
+        ticket.requestRefund();
+        ticket.rejectRefund();
+        assertThat(ticket.getStatus()).isEqualTo(TicketStatus.ACTIVE);
+    }
+
+    @Test
+    void request_refund_requires_active() {
+        Ticket ticket = issued();
+        ticket.requestRefund();
+        assertThatThrownBy(ticket::requestRefund)
+                .isInstanceOf(com.eventflow.modules.ticketing.domain.exception.TicketBlockedException.class);
+    }
+
+    @Test
+    void refund_transitions_require_pending() {
+        Ticket ticket = issued();
+        assertThatThrownBy(ticket::approveRefund)
+                .isInstanceOf(com.eventflow.modules.ticketing.domain.exception.TicketBlockedException.class);
+        assertThatThrownBy(ticket::rejectRefund)
+                .isInstanceOf(com.eventflow.modules.ticketing.domain.exception.TicketBlockedException.class);
     }
 }

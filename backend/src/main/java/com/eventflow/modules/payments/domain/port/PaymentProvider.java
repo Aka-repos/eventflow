@@ -16,6 +16,19 @@ public interface PaymentProvider {
      */
     Optional<ProviderResult> lookup(UUID paymentId);
 
+    /**
+     * Devuelve el dinero de una autorización aprobada. En v1 (FakePaymentProvider) siempre tiene
+     * éxito (D3); un proveedor real puede fallar/ser asíncrono — mismo puerto, distinto adapter.
+     */
+    RefundResult refund(UUID paymentId, com.eventflow.shared.domain.Money amount);
+
+    record RefundResult(boolean refunded, String providerRef) {
+
+        public static RefundResult ok(String providerRef) {
+            return new RefundResult(true, providerRef);
+        }
+    }
+
     record ProviderResult(boolean approved, String providerRef, String failureReason) {
 
         public static ProviderResult approved(String providerRef) {

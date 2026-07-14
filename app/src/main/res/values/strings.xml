@@ -75,4 +75,46 @@
     <string name="tickets_qr_available_at">QR disponible desde %1$s</string>
     <string name="orders_empty">No tienes órdenes todavía</string>
     <string name="orders_cancel">Cancelar</string>
+
+    <!-- QR / Check-in (Módulo 4) -->
+    <string name="qr_title">Mi entrada</string>
+    <string name="qr_hint">Muestra este código en la entrada. Se renueva automáticamente por seguridad.</string>
+    <string name="qr_not_yet_visible">Tu QR estará disponible más cerca del evento.</string>
+    <string name="ticket_show_qr">Ver mi QR</string>
+    <string name="scanner_title">Escanear entradas</string>
+    <string name="scanner_permission_needed">Necesitamos la cámara para escanear los códigos QR de acceso.</string>
+    <string name="scanner_grant_permission">Permitir cámara</string>
+    <string name="scanner_granted">✅ Acceso concedido</string>
+    <string name="scanner_denied">❌ Acceso denegado</string>
+    <string name="scanner_scan_next">Escanear siguiente</string>
+
+    <!-- Recuperación / Reembolsos (Módulo 5) -->
+    <string name="recovery_title">No podré asistir</string>
+    <string name="recovery_loading">Consultando tus opciones…</string>
+    <string name="recovery_offline">Sin conexión: las opciones de recuperación requieren estar en línea.</string>
+    <string name="recovery_option_refund_title">Reembolso disponible</string>
+    <string name="recovery_option_refund_body">Recibirás %1$s de vuelta. La devolución se procesa al aprobarse tu solicitud.</string>
+    <string name="recovery_option_exchange_title">Reventa disponible</string>
+    <string name="recovery_option_exchange_body">Puedes publicar tu boleto por %1$s (precio original %2$s, depreciación %3$d%%).</string>
+    <string name="recovery_option_none_title">Sin opciones de recuperación</string>
+    <string name="recovery_option_none_body">Este boleto no admite reembolso ni reventa en este momento.</string>
+    <string name="recovery_reason_label">Motivo (opcional)</string>
+    <string name="recovery_request_refund">Solicitar reembolso</string>
+    <string name="recovery_requested_ok">Solicitud enviada. Te avisaremos cuando el organizador la resuelva.</string>
+    <string name="recovery_reason_none">no_recoverable</string>
+
+    <!-- Bandeja del organizador -->
+    <string name="refund_inbox_title">Solicitudes de reembolso</string>
+    <string name="refund_inbox_empty">No hay solicitudes de reembolso.</string>
+    <string name="refund_inbox_offline">Sin conexión: no se pudo cargar la bandeja.</string>
+    <string name="refund_inbox_filter_all">Todas</string>
+    <string name="refund_status_requested">Pendiente</string>
+    <string name="refund_status_approved">Aprobada</string>
+    <string name="refund_status_rejected">Rechazada</string>
+    <string name="refund_status_cancelled">Cancelada</string>
+    <string name="refund_approve">Aprobar</string>
+    <string name="refund_reject">Rechazar</string>
+    <string name="refund_reject_reason_hint">Motivo del rechazo</string>
+    <string name="refund_reject_confirm">Confirmar rechazo</string>
+    <string name="refund_amount_label">Monto: %1$s</string>
 </resources>

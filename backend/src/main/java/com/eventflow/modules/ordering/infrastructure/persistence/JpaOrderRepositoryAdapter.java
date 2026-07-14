@@ -45,6 +45,15 @@ class JpaOrderRepositoryAdapter implements OrderRepository {
         return jpa.findByIdempotencyKey(idempotencyKey);
     }
 
+    @Override
+    public Optional<UUID> findOrderIdByItemId(UUID orderItemId) {
+        var result = entityManager.createNativeQuery(
+                        "SELECT order_id FROM commerce.order_items WHERE id = :id")
+                .setParameter("id", orderItemId)
+                .getResultList();
+        return result.isEmpty() ? Optional.empty() : Optional.of((UUID) result.get(0));
+    }
+
     /** Keyset (created_at DESC, id DESC) sobre ix_orders_buyer — api/07. */
     @Override
     public CursorPage<Order> findByBuyer(UUID buyerId, OrderStatus status, String cursor, int limit) {

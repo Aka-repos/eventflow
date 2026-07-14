@@ -94,6 +94,13 @@ public class LedgerEntry {
                 null, "ORDER", orderId, eventId, details);
     }
 
+    /** Reembolso (D1/ADR-19): ORGANIZER → BUYER, revierte la venta primaria; comisión 0. */
+    public static LedgerEntry refund(UUID organizerId, UUID buyerId, Money amount, UUID refundId, UUID eventId,
+                                     Map<String, Object> details) {
+        return new LedgerEntry("REFUND", "ORGANIZER:" + organizerId, "BUYER:" + buyerId, amount,
+                null, "REFUND", refundId, eventId, details);
+    }
+
     public String getEntryType() {
         return entryType;
     }

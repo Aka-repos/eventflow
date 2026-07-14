@@ -36,6 +36,8 @@ import com.app.eventflow.ui.feature.tickets.MyTicketsRoute
 @Composable
 fun HomeRoute(
     onNavigateToDetail: (String) -> Unit,
+    onNavigateToTicketQr: (String) -> Unit,
+    onNavigateToRecovery: (String) -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
@@ -90,7 +92,10 @@ fun HomeRoute(
         ) {
             when (selectedTab) {
                 0 -> CatalogListRoute(onNavigateToDetail = onNavigateToDetail)
-                1 -> MyTicketsRoute()
+                1 -> MyTicketsRoute(
+                    onNavigateToQr = onNavigateToTicketQr,
+                    onNavigateToRecovery = onNavigateToRecovery,
+                )
                 2 -> OrdersRoute()
                 else -> FavoritesRoute(onNavigateToDetail = onNavigateToDetail)
             }

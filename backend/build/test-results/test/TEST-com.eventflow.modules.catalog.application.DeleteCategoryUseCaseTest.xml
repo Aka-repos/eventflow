@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.eventflow.modules.catalog.application.DeleteCategoryUseCaseTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-12T18:56:45.855Z" hostname="MacBook-Air-de-Andres.local" time="0.224">
-  <properties/>
-  <testcase name="unused_category_is_deleted()" classname="com.eventflow.modules.catalog.application.DeleteCategoryUseCaseTest" time="0.215"/>
-  <testcase name="category_in_use_is_conflict()" classname="com.eventflow.modules.catalog.application.DeleteCategoryUseCaseTest" time="0.007"/>
-  <testcase name="missing_category_is_404()" classname="com.eventflow.modules.catalog.application.DeleteCategoryUseCaseTest" time="0.001"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

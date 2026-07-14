@@ -30,6 +30,10 @@ public final class TicketApiDtos {
     public record TicketHistoryEntryDto(String fromStatus, String toStatus, String cause, Instant occurredAt) {
     }
 
+    /** QrResponse (congelado): qrToken JWS opaco + expiración + cuándo re-pedirlo. */
+    public record QrResponse(String qrToken, Instant expiresAt, Instant refreshAfter) {
+    }
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public record TicketDetail(UUID id, EventSummaryLite event, String ticketTypeName, String zoneName,
                                String status, String acquiredVia, Instant purchasedAt,

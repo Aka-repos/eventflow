@@ -56,6 +56,12 @@ public class TicketHistoryEntry {
                 "ISSUED", actorId);
     }
 
+    /** Entrada genérica del historial (causa ∈ CHECK de BD: CHECKIN, INVALIDATE, REISSUE…). */
+    public static TicketHistoryEntry of(UUID ticketId, String fromStatus, String toStatus, String cause,
+                                        UUID actorId) {
+        return new TicketHistoryEntry(ticketId, fromStatus, toStatus, cause, actorId);
+    }
+
     public String getFromStatus() {
         return fromStatus;
     }

@@ -138,6 +138,58 @@ public class Ticket {
         return currentOwnerId.equals(userId);
     }
 
+    /** El boleto es presentable/validable solo en ACTIVE (check-in y emisión de QR). */
+    public boolean isCheckInEligible() {
+        return status == TicketStatus.ACTIVE;
+    }
+
+    /** Check-in exitoso: ACTIVE → USED (irreversible; el índice único de check-ins lo respalda). */
+    public void markUsed() {
+        if (status != TicketStatus.ACTIVE) {
+            throw new com.eventflow.modules.ticketing.domain.exception.TicketBlockedException(
+                    "El boleto no está activo (estado: " + status + ")");
+        }
+        this.status = TicketStatus.USED;
+    }
+
+    /** Solicitud de reembolso (ADR-19): ACTIVE → REFUND_PENDING. El QR se bloquea aparte. */
+    public void requestRefund() {
+        if (status != TicketStatus.ACTIVE) {
+            throw new com.eventflow.modules.ticketing.domain.exception.TicketBlockedException(
+                    "Solo un boleto ACTIVE admite reembolso (estado: " + status + ")");
+        }
+        this.status = TicketStatus.REFUND_PENDING;
+    }
+
+    /** Reembolso aprobado: REFUND_PENDING → REFUNDED (terminal). El QR se invalida aparte. */
+    public void approveRefund() {
+        requireRefundPending();
+        this.status = TicketStatus.REFUNDED;
+    }
+
+    /** Reembolso rechazado: REFUND_PENDING → ACTIVE. El QR se desbloquea aparte. */
+    public void rejectRefund() {
+        requireRefundPending();
+        this.status = TicketStatus.ACTIVE;
+    }
+
+    private void requireRefundPending() {
+        if (status != TicketStatus.REFUND_PENDING) {
+            throw new com.eventflow.modules.ticketing.domain.exception.TicketBlockedException(
+                    "El boleto no tiene un reembolso pendiente (estado: " + status + ")");
+        }
+    }
+
+    /** Invalidación por el organizador: cualquier estado no terminal → INVALIDATED. */
+    public void invalidate() {
+        if (status == TicketStatus.USED || status == TicketStatus.REFUNDED
+                || status == TicketStatus.CANCELLED) {
+            throw new com.eventflow.modules.ticketing.domain.exception.TicketBlockedException(
+                    "El boleto está en un estado terminal (estado: " + status + ")");
+        }
+        this.status = TicketStatus.INVALIDATED;
+    }
+
     public UUID getId() {
         return id;
     }
@@ -152,6 +204,10 @@ public class Ticket {
 
     public UUID getCurrentOwnerId() {
         return currentOwnerId;
+    }
+
+    public UUID getAcquisitionOrderItemId() {
+        return acquisitionOrderItemId;
     }
 
     public AcquiredVia getAcquiredVia() {

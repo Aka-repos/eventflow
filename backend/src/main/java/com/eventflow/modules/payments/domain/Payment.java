@@ -84,6 +84,14 @@ public class Payment {
         this.failureReason = reason;
     }
 
+    /** Reembolso aprobado: APPROVED → REFUNDED. El índice uq_payments_order_settled cubre ambos. */
+    public void refund() {
+        if (status != PaymentStatus.APPROVED) {
+            throw new IllegalStateException("Solo un pago APPROVED puede reembolsarse (estado: " + status + ")");
+        }
+        this.status = PaymentStatus.REFUNDED;
+    }
+
     private void requirePending() {
         if (status != PaymentStatus.PENDING) {
             throw new IllegalStateException("El intento de pago ya fue resuelto: " + status);

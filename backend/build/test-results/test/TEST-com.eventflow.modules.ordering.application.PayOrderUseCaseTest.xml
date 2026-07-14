@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.eventflow.modules.ordering.application.PayOrderUseCaseTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-12T18:56:52.021Z" hostname="MacBook-Air-de-Andres.local" time="0.079">
-  <properties/>
-  <testcase name="declined_payment_throws_402_only_after_finalize()" classname="com.eventflow.modules.ordering.application.PayOrderUseCaseTest" time="0.078"/>
-  <testcase name="expired_order_never_reaches_the_provider()" classname="com.eventflow.modules.ordering.application.PayOrderUseCaseTest" time="0.0"/>
-  <testcase name="approved_payment_finalizes_and_returns_result()" classname="com.eventflow.modules.ordering.application.PayOrderUseCaseTest" time="0.0"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

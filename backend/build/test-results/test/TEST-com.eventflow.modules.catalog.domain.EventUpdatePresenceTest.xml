@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<testsuite name="com.eventflow.modules.catalog.domain.EventUpdatePresenceTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-07-12T18:56:46.267Z" hostname="MacBook-Air-de-Andres.local" time="0.008">
-  <properties/>
-  <testcase name="absent_fields_do_not_touch_state()" classname="com.eventflow.modules.catalog.domain.EventUpdatePresenceTest" time="0.003"/>
-  <testcase name="unsafe_detection_covers_each_field()" classname="com.eventflow.modules.catalog.domain.EventUpdatePresenceTest" time="0.0"/>
-  <testcase name="present_nullable_fields_are_applied()" classname="com.eventflow.modules.catalog.domain.EventUpdatePresenceTest" time="0.005"/>
-  <system-out><![CDATA[]]></system-out>
-  <system-err><![CDATA[]]></system-err>
-</testsuite>

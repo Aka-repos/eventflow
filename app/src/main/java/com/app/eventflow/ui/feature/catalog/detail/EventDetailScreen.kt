@@ -11,6 +11,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.Card
@@ -40,6 +42,8 @@ import com.app.eventflow.ui.components.EfPrimaryButton
 fun EventDetailRoute(
     onNavigateBack: () -> Unit,
     onNavigateToCheckout: (eventId: String, tariffId: String) -> Unit = { _, _ -> },
+    onNavigateToScanner: (eventId: String) -> Unit = {},
+    onNavigateToRefundInbox: (eventId: String) -> Unit = {},
     viewModel: EventDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -57,12 +61,14 @@ fun EventDetailRoute(
         onBuy = { tariffId ->
             state.detail?.let { onNavigateToCheckout(it.summary.id, tariffId) }
         },
+        onScan = { state.detail?.let { onNavigateToScanner(it.summary.id) } },
+        onRefunds = { state.detail?.let { onNavigateToRefundInbox(it.summary.id) } },
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EventDetailScreen(state: EventDetailUiState, onEvent: (EventDetailUiEvent) -> Unit, onBuy: (String) -> Unit = {}) {
+fun EventDetailScreen(state: EventDetailUiState, onEvent: (EventDetailUiEvent) -> Unit, onBuy: (String) -> Unit = {}, onScan: () -> Unit = {}, onRefunds: () -> Unit = {}) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -77,6 +83,14 @@ fun EventDetailScreen(state: EventDetailUiState, onEvent: (EventDetailUiEvent) -
                 },
                 actions = {
                     state.detail?.let { detail ->
+                        IconButton(onClick = onScan) {
+                            Icon(Icons.Filled.Search,
+                                contentDescription = stringResource(R.string.scanner_title))
+                        }
+                        IconButton(onClick = onRefunds) {
+                            Icon(Icons.Filled.DateRange,
+                                contentDescription = stringResource(R.string.refund_inbox_title))
+                        }
                         val isFavorite = detail.summary.isFavorite == true
                         IconButton(onClick = { onEvent(EventDetailUiEvent.FavoriteToggled) }) {
                             Icon(

@@ -20,6 +20,9 @@ public interface OrderRepository {
 
     Optional<Order> findByIdempotencyKey(UUID idempotencyKey);
 
+    /** order_id que contiene un order_item dado (para localizar el pago de adquisición, C2). */
+    Optional<UUID> findOrderIdByItemId(UUID orderItemId);
+
     CursorPage<Order> findByBuyer(UUID buyerId, OrderStatus status, String cursor, int limit);
 
     /**

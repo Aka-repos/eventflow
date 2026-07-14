@@ -27,13 +27,21 @@ import com.app.eventflow.domain.model.orders.Ticket
 import com.app.eventflow.domain.model.orders.TicketStatus
 
 @Composable
-fun MyTicketsRoute(viewModel: MyTicketsViewModel = hiltViewModel()) {
+fun MyTicketsRoute(
+    onNavigateToQr: (String) -> Unit = {},
+    onNavigateToRecovery: (String) -> Unit = {},
+    viewModel: MyTicketsViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    MyTicketsScreen(state = state)
+    MyTicketsScreen(state = state, onShowQr = onNavigateToQr, onRecover = onNavigateToRecovery)
 }
 
 @Composable
-fun MyTicketsScreen(state: MyTicketsUiState) {
+fun MyTicketsScreen(
+    state: MyTicketsUiState,
+    onShowQr: (String) -> Unit = {},
+    onRecover: (String) -> Unit = {},
+) {
     Column(Modifier.fillMaxSize()) {
         if (state.isRefreshing) {
             LinearProgressIndicator(Modifier.fillMaxWidth())
@@ -61,7 +69,7 @@ fun MyTicketsScreen(state: MyTicketsUiState) {
                 verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 items(state.tickets, key = { it.id }) { ticket ->
-                    TicketCard(ticket)
+                    TicketCard(ticket, onShowQr = onShowQr, onRecover = onRecover)
                 }
             }
         }
@@ -69,7 +77,7 @@ fun MyTicketsScreen(state: MyTicketsUiState) {
 }
 
 @Composable
-private fun TicketCard(ticket: Ticket) {
+private fun TicketCard(ticket: Ticket, onShowQr: (String) -> Unit = {}, onRecover: (String) -> Unit = {}) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(ticket.event?.title ?: "", style = MaterialTheme.typography.titleMedium)
@@ -92,6 +100,18 @@ private fun TicketCard(ticket: Ticket) {
             ticket.qrAvailableAt?.let {
                 Text(stringResource(R.string.tickets_qr_available_at, it.take(16).replace('T', ' ')),
                     style = MaterialTheme.typography.bodySmall)
+            }
+            if (ticket.status == TicketStatus.ACTIVE) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    androidx.compose.material3.TextButton(onClick = { onShowQr(ticket.id) }) {
+                        Text(stringResource(R.string.ticket_show_qr))
+                    }
+                    if (ticket.canRecover) {
+                        androidx.compose.material3.TextButton(onClick = { onRecover(ticket.id) }) {
+                            Text(stringResource(R.string.recovery_title))
+                        }
+                    }
+                }
             }
         }
     }

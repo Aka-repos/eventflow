@@ -7,13 +7,19 @@ import com.app.eventflow.data.local.OrdersDao
 import com.app.eventflow.data.local.SessionUserDao
 import com.app.eventflow.data.remote.api.AuthApi
 import com.app.eventflow.data.remote.api.CatalogApi
+import com.app.eventflow.data.remote.api.CheckInApi
 import com.app.eventflow.data.remote.api.OrdersApi
+import com.app.eventflow.data.remote.api.RefundApi
 import com.app.eventflow.data.repository.AuthRepositoryImpl
 import com.app.eventflow.data.repository.CatalogRepositoryImpl
+import com.app.eventflow.data.repository.CheckInRepositoryImpl
 import com.app.eventflow.data.repository.OrdersRepositoryImpl
+import com.app.eventflow.data.repository.RefundRepositoryImpl
 import com.app.eventflow.domain.repository.AuthRepository
 import com.app.eventflow.domain.repository.CatalogRepository
+import com.app.eventflow.domain.repository.CheckInRepository
 import com.app.eventflow.domain.repository.OrdersRepository
+import com.app.eventflow.domain.repository.RefundRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -52,4 +58,20 @@ object RepositoryModule {
         problemConverter: ProblemConverter,
         @IoDispatcher ioDispatcher: CoroutineDispatcher,
     ): OrdersRepository = OrdersRepositoryImpl(api, dao, problemConverter, ioDispatcher)
+
+    @Provides
+    @Singleton
+    fun checkInRepository(
+        api: CheckInApi,
+        problemConverter: ProblemConverter,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    ): CheckInRepository = CheckInRepositoryImpl(api, problemConverter, ioDispatcher)
+
+    @Provides
+    @Singleton
+    fun refundRepository(
+        api: RefundApi,
+        problemConverter: ProblemConverter,
+        @IoDispatcher ioDispatcher: CoroutineDispatcher,
+    ): RefundRepository = RefundRepositoryImpl(api, problemConverter, ioDispatcher)
 }
