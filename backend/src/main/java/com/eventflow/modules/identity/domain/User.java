@@ -99,6 +99,18 @@ public class User {
         this.status = UserStatus.BLOCKED;
     }
 
+    /**
+     * Actualiza los datos editables del perfil (contrato UpdateProfileRequest: solo fullName y phone).
+     * El email, la contraseña y los roles NO se tocan aquí (datos sensibles / gobernados por otras reglas).
+     */
+    public void updateProfile(String fullName, String phone) {
+        if (fullName == null || fullName.isBlank() || fullName.length() > 200) {
+            throw new IllegalArgumentException("fullName must be 1..200 chars");
+        }
+        this.fullName = fullName.strip();
+        this.phone = (phone == null || phone.isBlank()) ? null : phone.strip();
+    }
+
     public Set<String> roleCodes() {
         return Set.copyOf(roles.stream().map(r -> r.getCode().name()).collect(java.util.stream.Collectors.toSet()));
     }

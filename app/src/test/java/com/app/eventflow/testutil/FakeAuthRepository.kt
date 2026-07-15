@@ -18,7 +18,16 @@ class FakeAuthRepository : AuthRepository {
     var registerCalls = 0
     var logoutCalls = 0
 
+    var updateError: AppError? = null
+    var updateCalls = 0
+    var lastUpdate: Pair<String, String?>? = null
+
     private val session = MutableStateFlow<UserProfile?>(null)
+
+    /** Prellena la sesión observada (para probar el prefill del perfil). */
+    fun setSession(profile: UserProfile?) {
+        session.value = profile
+    }
 
     override suspend fun register(
         email: String,
@@ -33,6 +42,15 @@ class FakeAuthRepository : AuthRepository {
     override suspend fun login(email: String, password: String): AppResult<UserProfile> {
         loginCalls++
         return respond()
+    }
+
+    override suspend fun updateProfile(fullName: String, phone: String?): AppResult<UserProfile> {
+        updateCalls++
+        lastUpdate = fullName to phone
+        updateError?.let { return AppResult.Failure(it) }
+        val updated = (session.value ?: sampleUser).copy(fullName = fullName, phone = phone)
+        session.value = updated
+        return AppResult.Success(updated)
     }
 
     override suspend fun logout() {

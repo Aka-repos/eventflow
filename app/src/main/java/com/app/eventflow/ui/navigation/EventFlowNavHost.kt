@@ -15,6 +15,7 @@ import com.app.eventflow.ui.feature.auth.register.RegisterRoute
 import com.app.eventflow.ui.feature.catalog.detail.EventDetailRoute
 import com.app.eventflow.ui.feature.checkout.CheckoutRoute
 import com.app.eventflow.ui.feature.home.HomeRoute
+import com.app.eventflow.ui.feature.profile.ProfileRoute
 import com.app.eventflow.ui.feature.qr.TicketQrRoute
 import com.app.eventflow.ui.feature.refunds.inbox.RefundInboxRoute
 import com.app.eventflow.ui.feature.refunds.recovery.RecoveryRoute
@@ -33,6 +34,7 @@ object Routes {
     const val SCANNER = "event/{eventId}/scan"
     const val RECOVERY = "ticket/{ticketId}/recovery"
     const val REFUND_INBOX = "organizer/event/{eventId}/refunds"
+    const val PROFILE = "me/profile"
 
     fun eventDetail(eventId: String) = "event/$eventId"
 
@@ -85,6 +87,7 @@ fun EventFlowNavHost(
                 onNavigateToDetail = { eventId -> navController.navigate(Routes.eventDetail(eventId)) },
                 onNavigateToTicketQr = { ticketId -> navController.navigate(Routes.ticketQr(ticketId)) },
                 onNavigateToRecovery = { ticketId -> navController.navigate(Routes.recovery(ticketId)) },
+                onNavigateToProfile = { navController.navigate(Routes.PROFILE) },
             )
         }
         composable(Routes.EVENT_DETAIL) {
@@ -116,6 +119,9 @@ fun EventFlowNavHost(
         }
         composable(Routes.REFUND_INBOX) {
             RefundInboxRoute(onNavigateBack = { navController.popBackStack() })
+        }
+        composable(Routes.PROFILE) {
+            ProfileRoute(onNavigateBack = { navController.popBackStack() })
         }
     }
 

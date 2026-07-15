@@ -35,6 +35,12 @@ public final class AuthDtos {
                                  List<String> roles, Instant createdAt) {
     }
 
+    /** Espejo del schema UpdateProfileRequest (solo campos editables: fullName requerido, phone E.164). */
+    public record UpdateProfileRequest(
+            @NotBlank @Size(min = 1, max = 200) String fullName,
+            @Pattern(regexp = "^\\+[1-9]\\d{6,14}$", message = "debe ser E.164") String phone) {
+    }
+
     public record AuthTokensResponse(String accessToken, long accessTokenExpiresIn,
                                      String refreshToken, UserProfileDto user) {
     }

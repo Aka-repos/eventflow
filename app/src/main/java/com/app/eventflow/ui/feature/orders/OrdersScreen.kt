@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.app.eventflow.R
+import com.app.eventflow.core.sensor.ShakeEffect
 import com.app.eventflow.domain.model.orders.Order
 import com.app.eventflow.domain.model.orders.OrderStatus
 
@@ -43,6 +44,8 @@ fun OrdersRoute(viewModel: OrdersViewModel = hiltViewModel()) {
             }
         }
     }
+    // Sensor: sacudir el teléfono refresca las órdenes (el detector solo cablea; la reacción está en el VM)
+    ShakeEffect { viewModel.onEvent(OrdersUiEvent.ShakeRefresh) }
     Box(Modifier.fillMaxSize()) {
         OrdersScreen(state = state, onEvent = viewModel::onEvent)
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))

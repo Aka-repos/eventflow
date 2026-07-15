@@ -34,6 +34,10 @@ data class UserProfileDto(
     val createdAt: String? = null,
 )
 
+/** Espejo del schema UpdateProfileRequest (solo campos editables: fullName requerido, phone E.164). */
+@Serializable
+data class UpdateProfileRequestDto(val fullName: String, val phone: String? = null)
+
 @Serializable
 data class AuthTokensResponseDto(
     val accessToken: String,

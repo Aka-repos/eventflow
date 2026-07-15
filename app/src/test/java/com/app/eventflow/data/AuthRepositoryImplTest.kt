@@ -42,13 +42,14 @@ class AuthRepositoryImplTest {
         server = MockWebServer()
         server.start()
         val json = Json { ignoreUnknownKeys = true; explicitNulls = false }
-        val api = Retrofit.Builder()
+        val retrofit = Retrofit.Builder()
             .baseUrl(server.url("/api/v1/"))
             .client(OkHttpClient())
             .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
             .build()
-            .create(AuthApi::class.java)
-        repository = AuthRepositoryImpl(api, tokenStore, dao, ProblemConverter(json), UnconfinedTestDispatcher())
+        val api = retrofit.create(AuthApi::class.java)
+        val meApi = retrofit.create(com.app.eventflow.data.remote.api.MeApi::class.java)
+        repository = AuthRepositoryImpl(api, meApi, tokenStore, dao, ProblemConverter(json), UnconfinedTestDispatcher())
     }
 
     @After

@@ -8,6 +8,7 @@ import com.app.eventflow.data.local.SessionUserDao
 import com.app.eventflow.data.remote.api.AuthApi
 import com.app.eventflow.data.remote.api.CatalogApi
 import com.app.eventflow.data.remote.api.CheckInApi
+import com.app.eventflow.data.remote.api.MeApi
 import com.app.eventflow.data.remote.api.OrdersApi
 import com.app.eventflow.data.remote.api.RefundApi
 import com.app.eventflow.data.repository.AuthRepositoryImpl
@@ -35,11 +36,12 @@ object RepositoryModule {
     @Singleton
     fun authRepository(
         api: AuthApi,
+        meApi: MeApi,
         tokenStore: TokenStore,
         dao: SessionUserDao,
         problemConverter: ProblemConverter,
         @IoDispatcher ioDispatcher: CoroutineDispatcher,
-    ): AuthRepository = AuthRepositoryImpl(api, tokenStore, dao, problemConverter, ioDispatcher)
+    ): AuthRepository = AuthRepositoryImpl(api, meApi, tokenStore, dao, problemConverter, ioDispatcher)
 
     @Provides
     @Singleton

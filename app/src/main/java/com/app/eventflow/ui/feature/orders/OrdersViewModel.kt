@@ -44,6 +44,12 @@ class OrdersViewModel @Inject constructor(
     fun onEvent(event: OrdersUiEvent) {
         when (event) {
             OrdersUiEvent.Refresh -> refresh()
+            // sacudida: avisa al usuario y reutiliza el mismo refresh (GET /orders?limit=50)
+            OrdersUiEvent.ShakeRefresh -> {
+                if (_state.value.isRefreshing) return
+                viewModelScope.launch { _effects.send(OrdersUiEffect.ShowMessage("Actualizando órdenes…")) }
+                refresh()
+            }
             is OrdersUiEvent.PayClicked -> mutate(event.orderId) { payOrder(event.orderId, "FAKE") }
             is OrdersUiEvent.CancelClicked -> mutate(event.orderId) { cancelOrder(event.orderId) }
         }

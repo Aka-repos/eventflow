@@ -9,10 +9,12 @@ import com.app.eventflow.data.local.SessionUserDao
 import com.app.eventflow.data.mapper.toDomain
 import com.app.eventflow.data.mapper.toEntity
 import com.app.eventflow.data.remote.api.AuthApi
+import com.app.eventflow.data.remote.api.MeApi
 import com.app.eventflow.data.remote.dto.AuthTokensResponseDto
 import com.app.eventflow.data.remote.dto.LoginRequestDto
 import com.app.eventflow.data.remote.dto.LogoutRequestDto
 import com.app.eventflow.data.remote.dto.RegisterRequestDto
+import com.app.eventflow.data.remote.dto.UpdateProfileRequestDto
 import com.app.eventflow.domain.model.UserProfile
 import com.app.eventflow.domain.repository.AuthRepository
 import kotlinx.coroutines.CoroutineDispatcher
@@ -23,6 +25,7 @@ import kotlinx.coroutines.withContext
 
 class AuthRepositoryImpl(
     private val api: AuthApi,
+    private val meApi: MeApi,
     private val tokenStore: TokenStore,
     private val sessionUserDao: SessionUserDao,
     private val problemConverter: ProblemConverter,
@@ -43,6 +46,14 @@ class AuthRepositoryImpl(
         safeApiCall(ioDispatcher, problemConverter) {
             api.login(LoginRequestDto(email, password)).data
         }.also { persistOnSuccess(it) }.map { it.user.toEntity().toDomain() }
+
+    override suspend fun updateProfile(fullName: String, phone: String?): AppResult<UserProfile> =
+        safeApiCall(ioDispatcher, problemConverter) {
+            meApi.updateProfile(UpdateProfileRequestDto(fullName, phone)).data
+        }.also { result ->
+            // reflejo inmediato: actualiza la sesión local; observeSession() empuja el nuevo perfil a la UI
+            if (result is AppResult.Success) sessionUserDao.upsert(result.value.toEntity())
+        }.map { it.toEntity().toDomain() }
 
     override suspend fun logout() {
         withContext(ioDispatcher) {

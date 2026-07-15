@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Search
@@ -38,6 +39,7 @@ fun HomeRoute(
     onNavigateToDetail: (String) -> Unit,
     onNavigateToTicketQr: (String) -> Unit,
     onNavigateToRecovery: (String) -> Unit = {},
+    onNavigateToProfile: () -> Unit = {},
     viewModel: HomeViewModel = hiltViewModel(),
 ) {
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
@@ -47,6 +49,12 @@ fun HomeRoute(
             TopAppBar(
                 title = { Text(stringResource(R.string.home_title)) },
                 actions = {
+                    IconButton(onClick = onNavigateToProfile) {
+                        Icon(
+                            Icons.Filled.AccountCircle,
+                            contentDescription = stringResource(R.string.profile_title),
+                        )
+                    }
                     IconButton(onClick = viewModel::onLogout) {
                         Icon(
                             Icons.AutoMirrored.Filled.ExitToApp,

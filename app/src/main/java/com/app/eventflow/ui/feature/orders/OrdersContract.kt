@@ -13,6 +13,9 @@ data class OrdersUiState(
 
 sealed interface OrdersUiEvent {
     data object Refresh : OrdersUiEvent
+
+    /** Gatillo del sensor: sacudir el teléfono re-consulta GET /orders?limit=50 (mismo endpoint). */
+    data object ShakeRefresh : OrdersUiEvent
     data class PayClicked(val orderId: String) : OrdersUiEvent
     data class CancelClicked(val orderId: String) : OrdersUiEvent
 }

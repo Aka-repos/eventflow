@@ -117,4 +117,12 @@
     <string name="refund_reject_reason_hint">Motivo del rechazo</string>
     <string name="refund_reject_confirm">Confirmar rechazo</string>
     <string name="refund_amount_label">Monto: %1$s</string>
+
+    <!-- Perfil (Módulo 6) -->
+    <string name="profile_title">Mi perfil</string>
+    <string name="profile_email">Correo: %1$s</string>
+    <string name="profile_roles">Roles: %1$s</string>
+    <string name="profile_full_name">Nombre completo</string>
+    <string name="profile_phone">Teléfono</string>
+    <string name="profile_save">Guardar cambios</string>
 </resources>
