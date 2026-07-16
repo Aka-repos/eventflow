@@ -21,6 +21,7 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Backend local desde el emulador; en release se inyecta por CI
         buildConfigField("String", "API_BASE_URL", "\"http://10.0.2.2:8080/api/v1/\"")
+       //buildConfigField("String", "API_BASE_URL", "\"http://localhost:8080/api/v1/\"")
     }
 
     buildTypes {

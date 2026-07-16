@@ -41,8 +41,8 @@ class ShakeDetectorTest {
 
     @Test
     fun `custom threshold is respected`() {
-        val detector = ShakeDetector(gThreshold = 5f)
-        assertFalse(detector.onSample(3.5f * g, 0f, 0f, nowMillis = 0L)) // bajo el umbral custom
-        assertTrue(detector.onSample(6f * g, 0f, 0f, nowMillis = 10L))   // sobre el umbral custom
+        val detector = ShakeDetector(gThreshold = 2f)
+        assertFalse(detector.onSample(1.5f * g, 0f, 0f, nowMillis = 0L)) // bajo el umbral custom
+        assertTrue(detector.onSample(3f * g, 0f, 0f, nowMillis = 10L))   // sobre el umbral custom
     }
 }

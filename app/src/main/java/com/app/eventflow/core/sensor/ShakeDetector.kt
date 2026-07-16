@@ -35,7 +35,7 @@ class ShakeDetector(
         const val GRAVITY_EARTH = 9.80665f
 
         /** ~2.7 g: sacudida deliberada, no un movimiento normal al caminar. */
-        const val DEFAULT_G_THRESHOLD = 2.7f
+        const val DEFAULT_G_THRESHOLD = 1.3f
 
         /** Ignora sacudidas dentro de 1 s de la anterior (evita llamadas repetidas). */
         const val DEFAULT_DEBOUNCE_MILLIS = 1_000L
